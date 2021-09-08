@@ -27,6 +27,19 @@ public class Curve {
                          new DjbECPrivateKey(keyPair.getPrivateKey()));
   }
 
+  /**
+   *
+   * Return the ECPublicKey that belongs to the provided privatekey
+   */
+  public static ECPublicKey createPublicKeyFromPrivateKey(byte[] privateKey)
+      throws InvalidKeyException {
+    byte[] pkb = Curve25519.getInstance(BEST).createPublicKeyFromPrivateKey(privateKey);
+    byte[] keyBytes = new byte[pkb.length+1];
+        System.arraycopy(pkb, 0, keyBytes, 1, pkb.length);
+    keyBytes[0] = Curve.DJB_TYPE;
+    return decodePoint(keyBytes, 0);
+  }
+
   public static ECPublicKey decodePoint(byte[] bytes, int offset)
       throws InvalidKeyException
   {

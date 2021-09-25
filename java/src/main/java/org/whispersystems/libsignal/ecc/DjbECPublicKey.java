@@ -26,6 +26,11 @@ public class DjbECPublicKey implements ECPublicKey {
   }
 
   @Override
+  public byte[] getPublicKeyBytes() {
+    return this.publicKey;
+  }
+
+  @Override
   public int getType() {
     return Curve.DJB_TYPE;
   }

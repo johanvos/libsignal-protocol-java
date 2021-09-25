@@ -12,5 +12,11 @@ public interface ECPublicKey extends Comparable<ECPublicKey> {
 
   public byte[] serialize();
 
+  public byte[] getPublicKeyBytes();
+
   public int getType();
+
+  static ECPublicKey fromPublicKeyBytes(byte[] b) {
+    throw new RuntimeException("Fix this in a better way");
+  }
 }

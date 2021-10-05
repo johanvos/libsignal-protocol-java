@@ -14,12 +14,11 @@ import org.whispersystems.libsignal.ecc.ECPrivateKey;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.groups.ratchet.SenderChainKey;
 import org.whispersystems.libsignal.groups.ratchet.SenderMessageKey;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
+import java.util.Optional;
 import static org.whispersystems.libsignal.state.StorageProtos.SenderKeyStateStructure;
 
 /**
@@ -34,7 +33,7 @@ public class SenderKeyState {
   private SenderKeyStateStructure senderKeyStateStructure;
 
   public SenderKeyState(int id, int iteration, byte[] chainKey, ECPublicKey signatureKey) {
-    this(id, iteration, chainKey, signatureKey, Optional.<ECPrivateKey>absent());
+    this(id, iteration, chainKey, signatureKey, Optional.<ECPrivateKey>empty());
   }
 
   public SenderKeyState(int id, int iteration, byte[] chainKey, ECKeyPair signatureKey) {

@@ -25,11 +25,11 @@ import org.whispersystems.libsignal.state.StorageProtos.SessionStructure.Chain;
 import org.whispersystems.libsignal.state.StorageProtos.SessionStructure.PendingKeyExchange;
 import org.whispersystems.libsignal.state.StorageProtos.SessionStructure.PendingPreKey;
 import org.whispersystems.libsignal.util.Pair;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -429,7 +429,7 @@ public class SessionState {
       if (sessionStructure.getPendingPreKey().hasPreKeyId()) {
         preKeyId = Optional.of(sessionStructure.getPendingPreKey().getPreKeyId());
       } else {
-        preKeyId = Optional.absent();
+        preKeyId = Optional.empty();
       }
 
       return

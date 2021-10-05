@@ -5,6 +5,7 @@
  */
 package org.whispersystems.libsignal;
 
+import java.util.Optional;
 
 import org.whispersystems.libsignal.ecc.Curve;
 import org.whispersystems.libsignal.ecc.ECKeyPair;
@@ -23,7 +24,6 @@ import org.whispersystems.libsignal.state.SessionStore;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.state.SignedPreKeyStore;
 import org.whispersystems.libsignal.util.Medium;
-import org.whispersystems.libsignal.util.guava.Optional;
 
 /**
  * SessionBuilder is responsible for setting up encrypted sessions.
@@ -117,7 +117,7 @@ public class SessionBuilder {
 
     if (sessionRecord.hasSessionState(message.getMessageVersion(), message.getBaseKey().serialize())) {
       Log.w(TAG, "We've already setup a session for this V3 message, letting bundled message fall through...");
-      return Optional.absent();
+      return Optional.empty();
     }
 
     ECKeyPair ourSignedPreKey = signedPreKeyStore.loadSignedPreKey(message.getSignedPreKeyId()).getKeyPair();
@@ -133,7 +133,7 @@ public class SessionBuilder {
     if (message.getPreKeyId().isPresent()) {
       parameters.setOurOneTimePreKey(Optional.of(preKeyStore.loadPreKey(message.getPreKeyId().get()).getKeyPair()));
     } else {
-      parameters.setOurOneTimePreKey(Optional.<ECKeyPair>absent());
+      parameters.setOurOneTimePreKey(Optional.<ECKeyPair>empty());
     }
 
     if (!sessionRecord.isFresh()) sessionRecord.archiveCurrentState();
@@ -147,7 +147,7 @@ public class SessionBuilder {
     if (message.getPreKeyId().isPresent()) {
       return message.getPreKeyId();
     } else {
-      return Optional.absent();
+      return Optional.empty();
     }
   }
 
@@ -183,9 +183,9 @@ public class SessionBuilder {
       SessionRecord         sessionRecord        = sessionStore.loadSession(remoteAddress);
       ECKeyPair             ourBaseKey           = Curve.generateKeyPair();
       ECPublicKey           theirSignedPreKey    = preKey.getSignedPreKey();
-      Optional<ECPublicKey> theirOneTimePreKey   = Optional.fromNullable(preKey.getPreKey());
+      Optional<ECPublicKey> theirOneTimePreKey   = Optional.ofNullable(preKey.getPreKey());
       Optional<Integer>     theirOneTimePreKeyId = theirOneTimePreKey.isPresent() ? Optional.of(preKey.getPreKeyId()) :
-                                                                                    Optional.<Integer>absent();
+                                                                                    Optional.<Integer>empty();
 
       AliceSignalProtocolParameters.Builder parameters = AliceSignalProtocolParameters.newBuilder();
 

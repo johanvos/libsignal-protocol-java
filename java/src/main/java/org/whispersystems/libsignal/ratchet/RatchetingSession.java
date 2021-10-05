@@ -15,7 +15,9 @@ import org.whispersystems.libsignal.protocol.CiphertextMessage;
 import org.whispersystems.libsignal.state.SessionState;
 import org.whispersystems.libsignal.util.ByteUtil;
 import org.whispersystems.libsignal.util.Pair;
-import org.whispersystems.libsignal.util.guava.Optional;
+
+
+import java.util.Optional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,7 +36,7 @@ public class RatchetingSession {
                      .setTheirRatchetKey(parameters.getTheirRatchetKey())
                      .setTheirIdentityKey(parameters.getTheirIdentityKey())
                      .setTheirSignedPreKey(parameters.getTheirBaseKey())
-                     .setTheirOneTimePreKey(Optional.<ECPublicKey>absent());
+                     .setTheirOneTimePreKey(Optional.<ECPublicKey>empty());
 
       RatchetingSession.initializeSession(sessionState, aliceParameters.create());
     } else {
@@ -43,7 +45,7 @@ public class RatchetingSession {
       bobParameters.setOurIdentityKey(parameters.getOurIdentityKey())
                    .setOurRatchetKey(parameters.getOurRatchetKey())
                    .setOurSignedPreKey(parameters.getOurBaseKey())
-                   .setOurOneTimePreKey(Optional.<ECKeyPair>absent())
+                   .setOurOneTimePreKey(Optional.<ECKeyPair>empty())
                    .setTheirBaseKey(parameters.getTheirBaseKey())
                    .setTheirIdentityKey(parameters.getTheirIdentityKey());
 

@@ -20,6 +20,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 
+import java.util.Arrays;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -111,10 +113,18 @@ public class SignalMessage implements CiphertextMessage {
   public void verifyMac(IdentityKey senderIdentityKey, IdentityKey receiverIdentityKey, SecretKeySpec macKey)
       throws InvalidMessageException
   {
+System.err.println("[SIGNALMESSAGE] verifyMac, senderIK = " + senderIdentityKey.getPublicKey() + " and receierKey = "+receiverIdentityKey.getPublicKey()+" and mackey = " + macKey);
     byte[][] parts    = ByteUtil.split(serialized, serialized.length - MAC_LENGTH, MAC_LENGTH);
     byte[]   ourMac   = getMac(senderIdentityKey, receiverIdentityKey, macKey, parts[0]);
     byte[]   theirMac = parts[1];
+System.err.println("serialized = " + Arrays.toString(serialized));
+System.err.println("ourmac = " + Arrays.toString(ourMac));
+System.err.println("theirmac = " + Arrays.toString(theirMac));
+System.err.println("senderkey = " + Arrays.toString(senderIdentityKey.getPublicKey().serialize()));
+System.err.println("receiverkey = " + Arrays.toString(receiverIdentityKey.getPublicKey().serialize()));
 
+
+System.err.println("[SIGNALMESSAGE] verufyMac, ourmaclength = " + ourMac.length+" and their = " + theirMac.length);
     if (!MessageDigest.isEqual(ourMac, theirMac)) {
       throw new InvalidMessageException("Bad Mac!");
     }

@@ -26,6 +26,7 @@ import org.whispersystems.libsignal.state.StorageProtos.SessionStructure.Pending
 import org.whispersystems.libsignal.state.StorageProtos.SessionStructure.PendingPreKey;
 import org.whispersystems.libsignal.util.Pair;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -82,6 +83,8 @@ public class SessionState {
   }
 
   public void setRemoteIdentityKey(IdentityKey identityKey) {
+System.err.println("SessionState, set remoteIK to " + Arrays.toString(identityKey.serialize()));
+Thread.dumpStack();
     this.sessionStructure = this.sessionStructure.toBuilder()
                                                  .setRemoteIdentityPublic(ByteString.copyFrom(identityKey.serialize()))
                                                  .build();

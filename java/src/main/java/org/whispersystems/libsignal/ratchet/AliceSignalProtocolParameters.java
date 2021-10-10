@@ -36,6 +36,12 @@ public class AliceSignalProtocolParameters {
     if (ourIdentityKey == null || ourBaseKey == null || theirIdentityKey == null ||
         theirSignedPreKey == null || theirRatchetKey == null || theirOneTimePreKey == null)
     {
+      if (ourIdentityKey == null) System.err.println("ourIdentityKey null");
+      if (ourBaseKey == null) System.err.println("ourBaseKey null");
+      if (theirIdentityKey == null) System.err.println("theirIdentityKey null");
+      if (theirSignedPreKey == null) System.err.println("theirSignedPreKey null");
+      if (theirRatchetKey == null) System.err.println("theirRatchetKey null");
+      if (theirOneTimePreKey == null) System.err.println("theirOneTimePreKey null");
       throw new IllegalArgumentException("Null values!");
     }
   }

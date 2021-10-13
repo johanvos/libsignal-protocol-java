@@ -83,8 +83,6 @@ public class SessionState {
   }
 
   public void setRemoteIdentityKey(IdentityKey identityKey) {
-System.err.println("SessionState, set remoteIK to " + Arrays.toString(identityKey.serialize()));
-Thread.dumpStack();
     this.sessionStructure = this.sessionStructure.toBuilder()
                                                  .setRemoteIdentityPublic(ByteString.copyFrom(identityKey.serialize()))
                                                  .build();

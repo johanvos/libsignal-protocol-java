@@ -24,6 +24,7 @@ import java.util.Arrays;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import org.whispersystems.libsignal.logging.Log;
 
 public class SignalMessage implements CiphertextMessage {
 
@@ -35,6 +36,7 @@ public class SignalMessage implements CiphertextMessage {
   private final int         previousCounter;
   private final byte[]      ciphertext;
   private final byte[]      serialized;
+  private String TAG = "SignalMessage";
 
   public SignalMessage(byte[] serialized) throws InvalidMessageException, LegacyMessageException {
     try {
@@ -113,19 +115,19 @@ public class SignalMessage implements CiphertextMessage {
   public void verifyMac(IdentityKey senderIdentityKey, IdentityKey receiverIdentityKey, SecretKeySpec macKey)
       throws InvalidMessageException
   {
-System.err.println("[SIGNALMESSAGE] verifyMac, senderIK = " + senderIdentityKey.getPublicKey() + " and receierKey = "+receiverIdentityKey.getPublicKey()+" and mackey = " + macKey);
+    Log.d(TAG, "verifyMac");
     byte[][] parts    = ByteUtil.split(serialized, serialized.length - MAC_LENGTH, MAC_LENGTH);
     byte[]   ourMac   = getMac(senderIdentityKey, receiverIdentityKey, macKey, parts[0]);
     byte[]   theirMac = parts[1];
-System.err.println("serialized = " + Arrays.toString(serialized));
-System.err.println("ourmac = " + Arrays.toString(ourMac));
-System.err.println("theirmac = " + Arrays.toString(theirMac));
-System.err.println("senderkey = " + Arrays.toString(senderIdentityKey.getPublicKey().serialize()));
-System.err.println("receiverkey = " + Arrays.toString(receiverIdentityKey.getPublicKey().serialize()));
 
-
-System.err.println("[SIGNALMESSAGE] verufyMac, ourmaclength = " + ourMac.length+" and their = " + theirMac.length);
     if (!MessageDigest.isEqual(ourMac, theirMac)) {
+        Log.d(TAG, "[SIGNALMESSAGE] verifyMac, senderIK = " + senderIdentityKey.getPublicKey() + " and receierKey = "+receiverIdentityKey.getPublicKey()+" and mackey = " + macKey);        
+        Log.d(TAG, "serialized = " + Arrays.toString(serialized));
+        Log.d(TAG, "ourmac = " + Arrays.toString(ourMac));
+        Log.d(TAG, "theirmac = " + Arrays.toString(theirMac));
+        Log.d(TAG, "senderkey = " + Arrays.toString(senderIdentityKey.getPublicKey().serialize()));
+        Log.d(TAG, "receiverkey = " + Arrays.toString(receiverIdentityKey.getPublicKey().serialize()));
+        Log.d(TAG, "[SIGNALMESSAGE] verifyMac, ourmaclength = " + ourMac.length+" and their = " + theirMac.length);
       throw new InvalidMessageException("Bad Mac!");
     }
   }

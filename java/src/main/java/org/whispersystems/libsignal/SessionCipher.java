@@ -37,6 +37,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.whispersystems.libsignal.logging.Log;
 
 import static org.whispersystems.libsignal.state.SessionState.UnacknowledgedPreKeyMessageItems;
 
@@ -58,6 +59,8 @@ public class SessionCipher {
   private final SessionBuilder        sessionBuilder;
   private final PreKeyStore           preKeyStore;
   private final SignalProtocolAddress remoteAddress;
+  final String TAG = "Sessioncipher";
+
 
   /**
    * Construct a SessionCipher for encrypt/decrypt operations on a session.
@@ -90,7 +93,6 @@ public class SessionCipher {
    * @return A ciphertext message encrypted to the recipient+device tuple.
    */
   public CiphertextMessage encrypt(byte[] paddedMessage) throws UntrustedIdentityException {
-      System.err.println("[SESSIONCIPHER] decrypt7");
 
       synchronized (SESSION_LOCK) {
       SessionRecord sessionRecord   = sessionStore.loadSession(remoteAddress);
@@ -126,7 +128,6 @@ public class SessionCipher {
 
       identityKeyStore.saveIdentity(remoteAddress, sessionState.getRemoteIdentityKey());
       sessionStore.storeSession(remoteAddress, sessionRecord);
-            System.err.println("[SESSIONCIPHER] decrypt7 done");
 
       return ciphertextMessage;
     }
@@ -179,7 +180,7 @@ public class SessionCipher {
       throws DuplicateMessageException, LegacyMessageException, InvalidMessageException,
              InvalidKeyIdException, InvalidKeyException, UntrustedIdentityException
   {
-      System.err.println("[SESSIONCIPHER] decrypt2");
+    Log.d(TAG, "Decrypt2 start");
     synchronized (SESSION_LOCK) {
       SessionRecord     sessionRecord    = sessionStore.loadSession(remoteAddress);
       Optional<Integer> unsignedPreKeyId = sessionBuilder.process(sessionRecord, ciphertext);
@@ -193,7 +194,7 @@ public class SessionCipher {
         preKeyStore.removePreKey(unsignedPreKeyId.get());
       }
 
-      System.err.println("[SESSIONCIPHER] decrypt2 done");
+      Log.d(TAG, "Decrypt2 done");
       return plaintext;
     }
   }
@@ -239,7 +240,7 @@ public class SessionCipher {
       throws InvalidMessageException, DuplicateMessageException, LegacyMessageException,
              NoSessionException, UntrustedIdentityException
   {
-            System.err.println("[SESSIONCIPHER] decrypt4");
+    Log.d(TAG, "Decrypt4 start");
 
     synchronized (SESSION_LOCK) {
 
@@ -259,7 +260,7 @@ public class SessionCipher {
       callback.handlePlaintext(plaintext);
 
       sessionStore.storeSession(remoteAddress, sessionRecord);
-            System.err.println("[SESSIONCIPHER] decrypt4 done");
+      Log.d(TAG, "Decrypt4 done");
 
       return plaintext;
     }
@@ -268,8 +269,7 @@ public class SessionCipher {
   private byte[] decrypt(SessionRecord sessionRecord, SignalMessage ciphertext)
       throws DuplicateMessageException, LegacyMessageException, InvalidMessageException
   {
-    System.err.println("[SESSIONCIPHER] decrypt5");
-
+    Log.d(TAG, "Decrypt5 start");
     synchronized (SESSION_LOCK) {
       Iterator<SessionState> previousStates = sessionRecord.getPreviousSessionStates().iterator();
       List<Exception>        exceptions     = new LinkedList<>();
@@ -279,7 +279,7 @@ public class SessionCipher {
         byte[]       plaintext    = decrypt(sessionState, ciphertext);
 
         sessionRecord.setState(sessionState);
-                          System.err.println("[SESSIONCIPHER] decrypt5 done");
+        Log.d(TAG, "Decrypt5 done");
 
         return plaintext;
       } catch (InvalidMessageException e) {
@@ -307,7 +307,7 @@ public class SessionCipher {
   private byte[] decrypt(SessionState sessionState, SignalMessage ciphertextMessage)
       throws InvalidMessageException, DuplicateMessageException, LegacyMessageException
   {
-    System.err.println("[SESSIONCIPHER] decrypt6");
+    Log.d(TAG, "Decrypt6 start");
 
     if (!sessionState.hasSenderChain()) {
       throw new InvalidMessageException("Uninitialized session!");
@@ -332,7 +332,7 @@ public class SessionCipher {
     byte[] plaintext = getPlaintext(messageKeys, ciphertextMessage.getBody());
 
     sessionState.clearUnacknowledgedPreKeyMessage();
-    System.err.println("[SESSIONCIPHER] decrypt6 done");
+    Log.d(TAG, "Decrypt6 done");
 
     return plaintext;
   }

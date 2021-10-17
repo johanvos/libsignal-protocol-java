@@ -46,6 +46,7 @@ public class SessionRecord {
   }
 
   public boolean hasSessionState(int version, byte[] aliceBaseKey) {
+      System.err.println("[SR] SessionRecord.hasSessionState asked for version "+version);
     if (sessionState.getSessionVersion() == version &&
         Arrays.equals(aliceBaseKey, sessionState.getAliceBaseKey()))
     {
@@ -59,6 +60,7 @@ public class SessionRecord {
         return true;
       }
     }
+      System.err.println("[SR] SessionRecord.hasSessionState NOT for version "+version);
 
     return false;
   }
@@ -92,6 +94,7 @@ public class SessionRecord {
   }
 
   public void promoteState(SessionState promotedState) {
+      System.err.println("[SR] promoteState "+promotedState);
     this.previousStates.addFirst(sessionState);
     this.sessionState = promotedState;
 

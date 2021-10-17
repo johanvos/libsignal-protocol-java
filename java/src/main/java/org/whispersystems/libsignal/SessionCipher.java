@@ -26,6 +26,7 @@ import org.whispersystems.libsignal.util.Pair;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -74,6 +75,7 @@ public class SessionCipher {
                        SignedPreKeyStore signedPreKeyStore, IdentityKeyStore identityKeyStore,
                        SignalProtocolAddress remoteAddress)
   {
+      System.err.println("[SC] Create NEW SESSIONCIPHER for address "+remoteAddress+": "+this);
     this.sessionStore     = sessionStore;
     this.preKeyStore      = preKeyStore;
     this.identityKeyStore = identityKeyStore;
@@ -93,7 +95,7 @@ public class SessionCipher {
    * @return A ciphertext message encrypted to the recipient+device tuple.
    */
   public CiphertextMessage encrypt(byte[] paddedMessage) throws UntrustedIdentityException {
-
+      System.err.println("[SC] use SC "+this+" to encrypt "+paddedMessage.length+" bytes");
       synchronized (SESSION_LOCK) {
       SessionRecord sessionRecord   = sessionStore.loadSession(remoteAddress);
       SessionState  sessionState    = sessionRecord.getSessionState();
@@ -181,6 +183,8 @@ public class SessionCipher {
              InvalidKeyIdException, InvalidKeyException, UntrustedIdentityException
   {
     Log.d(TAG, "Decrypt2 start");
+          System.err.println("[SC] use SC "+this+" to decrypt ");
+
     synchronized (SESSION_LOCK) {
       SessionRecord     sessionRecord    = sessionStore.loadSession(remoteAddress);
       Optional<Integer> unsignedPreKeyId = sessionBuilder.process(sessionRecord, ciphertext);
@@ -241,6 +245,7 @@ public class SessionCipher {
              NoSessionException, UntrustedIdentityException
   {
     Log.d(TAG, "Decrypt4 start");
+          System.err.println("[SC] use SC "+this+" to decrypt4 ");
 
     synchronized (SESSION_LOCK) {
 
@@ -270,6 +275,8 @@ public class SessionCipher {
       throws DuplicateMessageException, LegacyMessageException, InvalidMessageException
   {
     Log.d(TAG, "Decrypt5 start");
+              System.err.println("[SC] use SC "+this+" to decrypt5 ");
+
     synchronized (SESSION_LOCK) {
       Iterator<SessionState> previousStates = sessionRecord.getPreviousSessionStates().iterator();
       List<Exception>        exceptions     = new LinkedList<>();
@@ -307,7 +314,8 @@ public class SessionCipher {
   private byte[] decrypt(SessionState sessionState, SignalMessage ciphertextMessage)
       throws InvalidMessageException, DuplicateMessageException, LegacyMessageException
   {
-    Log.d(TAG, "Decrypt6 start");
+    Log.d(TAG, "[SC] Decrypt6 start, sessionState = "+sessionState);
+              System.err.println("[SC] use SC "+this+" to decrypt6 ");
 
     if (!sessionState.hasSenderChain()) {
       throw new InvalidMessageException("Uninitialized session!");
@@ -358,10 +366,17 @@ public class SessionCipher {
   private ChainKey getOrCreateChainKey(SessionState sessionState, ECPublicKey theirEphemeral)
       throws InvalidMessageException
   {
+      System.err.println("[SC] getOrCreateChainKey for sessionState "+sessionState+
+              " and theirEphemeral pb = "+Arrays.toString(theirEphemeral.getPublicKeyBytes()) +
+              " and theirEphemeral ser = "+Arrays.toString(theirEphemeral.getPublicKeyBytes()));
     try {
       if (sessionState.hasReceiverChain(theirEphemeral)) {
+          System.err.println("[SC] getOrCreateChainKey: already have receiver chain for "
+          + Arrays.toString(theirEphemeral.serialize()));
         return sessionState.getReceiverChainKey(theirEphemeral);
       } else {
+           System.err.println("[SC] getOrCreateChainKey: create receiver chain for "
+          + Arrays.toString(theirEphemeral.serialize()));
         RootKey                 rootKey         = sessionState.getRootKey();
         ECKeyPair               ourEphemeral    = sessionState.getSenderRatchetKeyPair();
         Pair<RootKey, ChainKey> receiverChain   = rootKey.createChain(theirEphemeral, ourEphemeral);
@@ -385,6 +400,7 @@ public class SessionCipher {
                                              ChainKey chainKey, int counter)
       throws InvalidMessageException, DuplicateMessageException
   {
+      System.err.println("[SC] ChainKey index = "+chainKey.getIndex()+" and counter = "+counter);
     if (chainKey.getIndex() > counter) {
       if (sessionState.hasMessageKeys(theirEphemeral, counter)) {
         return sessionState.removeMessageKeys(theirEphemeral, counter);
@@ -399,6 +415,7 @@ public class SessionCipher {
     }
 
     while (chainKey.getIndex() < counter) {
+        System.err.println("[SC] forward-store message keys, chainkeyidx = "+chainKey.getIndex());
       MessageKeys messageKeys = chainKey.getMessageKeys();
       sessionState.setMessageKeys(theirEphemeral, messageKeys);
       chainKey = chainKey.getNextChainKey();

@@ -119,7 +119,7 @@ public class SignalMessage implements CiphertextMessage {
     byte[][] parts    = ByteUtil.split(serialized, serialized.length - MAC_LENGTH, MAC_LENGTH);
     byte[]   ourMac   = getMac(senderIdentityKey, receiverIdentityKey, macKey, parts[0]);
     byte[]   theirMac = parts[1];
-
+    if (!MessageDigest.isEqual(ourMac, theirMac)) {
         Log.d(TAG, "[SIGNALMESSAGE] verifyMac, senderIK = " + senderIdentityKey.getPublicKey() + " and receierKey = "+receiverIdentityKey.getPublicKey()+" and mackey = " + macKey);        
         Log.d(TAG, "serialized = " + Arrays.toString(serialized));
         Log.d(TAG, "ourmac = " + Arrays.toString(ourMac));
@@ -127,8 +127,6 @@ public class SignalMessage implements CiphertextMessage {
         Log.d(TAG, "senderkey = " + Arrays.toString(senderIdentityKey.getPublicKey().serialize()));
         Log.d(TAG, "receiverkey = " + Arrays.toString(receiverIdentityKey.getPublicKey().serialize()));
         Log.d(TAG, "[SIGNALMESSAGE] verifyMac, ourmaclength = " + ourMac.length+" and their = " + theirMac.length);
-     
-    if (!MessageDigest.isEqual(ourMac, theirMac)) {
         throw new InvalidMessageException("Bad Mac!");
     }
   }

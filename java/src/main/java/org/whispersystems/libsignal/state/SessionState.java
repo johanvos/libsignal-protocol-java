@@ -164,7 +164,6 @@ public class SessionState {
   private Pair<Chain,Integer> getReceiverChain(ECPublicKey senderEphemeral) {
     List<Chain> receiverChains = sessionStructure.getReceiverChainsList();
     int         index          = 0;
-      System.err.println("[SS] getReceiverChain asked, list = "+receiverChains);
     for (Chain receiverChain : receiverChains) {
       try {
         ECPublicKey chainSenderRatchetKey = Curve.decodePoint(receiverChain.getSenderRatchetKey().toByteArray(), 0);

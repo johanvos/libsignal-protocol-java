@@ -3,6 +3,7 @@ module org.whispersystems.protocol {
     requires org.whispersystems.curve25519;
     exports org.whispersystems.libsignal;
     exports org.whispersystems.libsignal.ecc;
+    exports org.whispersystems.libsignal.groups;
     exports org.whispersystems.libsignal.groups.state;
     exports org.whispersystems.libsignal.kdf;
     exports org.whispersystems.libsignal.logging;

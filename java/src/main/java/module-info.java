@@ -8,6 +8,8 @@ module org.whispersystems.protocol {
     exports org.whispersystems.libsignal.kdf;
     exports org.whispersystems.libsignal.logging;
     exports org.whispersystems.libsignal.protocol;
+    exports org.whispersystems.libsignal.ratchet;
     exports org.whispersystems.libsignal.state;
+    exports org.whispersystems.libsignal.state.impl;
     exports org.whispersystems.libsignal.util;
 }

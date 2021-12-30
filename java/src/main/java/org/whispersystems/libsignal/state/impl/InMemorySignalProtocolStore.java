@@ -16,6 +16,8 @@ import org.whispersystems.libsignal.state.SessionRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import org.whispersystems.libsignal.groups.SenderKeyName;
 import org.whispersystems.libsignal.groups.state.SenderKeyRecord;
 
@@ -131,15 +133,55 @@ public class InMemorySignalProtocolStore implements SignalProtocolStore {
     signedPreKeyStore.removeSignedPreKey(signedPreKeyId);
   }
 
-  private final HashMap<SenderKeyName, SenderKeyRecord> senderKeyMap = new HashMap<>();
+  private final HashMap<MySenderKey, SenderKeyRecord> senderKeyMap = new HashMap<>();
   
     @Override
-    public void storeSenderKey(SenderKeyName senderKeyName, SenderKeyRecord record) {
-        senderKeyMap.put(senderKeyName, record);
+    public void storeSenderKey(SignalProtocolAddress sender, UUID uuid, SenderKeyRecord record) {
+        senderKeyMap.put(new MySenderKey(sender, uuid), record);
     }
 
     @Override
-    public SenderKeyRecord loadSenderKey(SenderKeyName senderKeyName) {
-        return senderKeyMap.get(senderKeyName);
+    public SenderKeyRecord loadSenderKey(SignalProtocolAddress sender, UUID uuid) {
+        return senderKeyMap.get(new MySenderKey(sender, uuid));
+    }
+    
+    class MySenderKey {
+        final SignalProtocolAddress spa;
+        final UUID uuid;
+        MySenderKey(SignalProtocolAddress spa, UUID uuid) {
+            this.spa = spa;
+            this.uuid = uuid;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 71 * hash + Objects.hashCode(this.spa);
+            hash = 71 * hash + Objects.hashCode(this.uuid);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final MySenderKey other = (MySenderKey) obj;
+            if (!Objects.equals(this.spa, other.spa)) {
+                return false;
+            }
+            if (!Objects.equals(this.uuid, other.uuid)) {
+                return false;
+            }
+            return true;
+        }
+        
+        
     }
 }

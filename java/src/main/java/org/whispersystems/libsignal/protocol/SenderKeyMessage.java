@@ -5,7 +5,6 @@
  */
 package org.whispersystems.libsignal.protocol;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -17,16 +16,23 @@ import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.util.ByteUtil;
 
 import java.text.ParseException;
+import java.util.UUID;
 
 public class SenderKeyMessage implements CiphertextMessage {
 
   private static final int SIGNATURE_LENGTH = 64;
 
-  private final int         messageVersion;
-  private final int         keyId;
-  private final int         iteration;
-  private final byte[]      ciphertext;
-  private final byte[]      serialized;
+  private UUID distributionUuid;
+  private int chainId;
+  private int iteration;
+  private byte[] cipherText;
+    private  byte[]      serialized;
+
+//  private  int         messageVersion;
+//  private  int         keyId;
+//  private  int         iteration;
+//  private  byte[]      ciphertext;
+//  private  byte[]      serialized;
 
   public SenderKeyMessage(byte[] serialized) throws InvalidMessageException, LegacyMessageException {
     try {
@@ -44,51 +50,62 @@ public class SenderKeyMessage implements CiphertextMessage {
       }
 
       SignalProtos.SenderKeyMessage senderKeyMessage = SignalProtos.SenderKeyMessage.parseFrom(message);
-
-      if (!senderKeyMessage.hasId() ||
-          !senderKeyMessage.hasIteration() ||
-          !senderKeyMessage.hasCiphertext())
-      {
-        throw new InvalidMessageException("Incomplete message.");
-      }
-
-      this.serialized     = serialized;
-      this.messageVersion = ByteUtil.highBitsToInt(version);
-      this.keyId          = senderKeyMessage.getId();
-      this.iteration      = senderKeyMessage.getIteration();
-      this.ciphertext     = senderKeyMessage.getCiphertext().toByteArray();
+        System.err.println("DISTID = " + senderKeyMessage.getDistributionUuid());   
+      
+//      if (!senderKeyMessage.hasId() ||
+//          !senderKeyMessage.hasIteration() ||
+//          !senderKeyMessage.hasCiphertext())
+//      {
+//        throw new InvalidMessageException("Incomplete message.");
+//      }
+//
+//      this.serialized     = serialized;
+//      this.messageVersion = ByteUtil.highBitsToInt(version);
+//      this.keyId          = senderKeyMessage.getId();
+//      this.iteration      = senderKeyMessage.getIteration();
+this.serialized = serialized;
+this.distributionUuid = UUID.nameUUIDFromBytes(senderKeyMessage.getDistributionUuid().toByteArray());
+this.chainId = senderKeyMessage.getChainId();
+this.iteration = senderKeyMessage.getIteration();
+this.cipherText     = senderKeyMessage.getCiphertext().toByteArray();
+      
     } catch (InvalidProtocolBufferException | ParseException e) {
       throw new InvalidMessageException(e);
     }
   }
 
   public SenderKeyMessage(int keyId, int iteration, byte[] ciphertext, ECPrivateKey signatureKey) {
-    byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
-    byte[] message = SignalProtos.SenderKeyMessage.newBuilder()
-                                                  .setId(keyId)
-                                                  .setIteration(iteration)
-                                                  .setCiphertext(ByteString.copyFrom(ciphertext))
-                                                  .build().toByteArray();
-
-    byte[] signature = getSignature(signatureKey, ByteUtil.combine(version, message));
-
-    this.serialized       = ByteUtil.combine(version, message, signature);
-    this.messageVersion   = CURRENT_VERSION;
-    this.keyId            = keyId;
-    this.iteration        = iteration;
-    this.ciphertext       = ciphertext;
+throw new RuntimeException("Creation of SKM not yet supported");
+//    byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
+//    byte[] message = SignalProtos.SenderKeyMessage.newBuilder()
+//                                                  .setId(keyId)
+//                                                  .setIteration(iteration)
+//                                                  .setCiphertext(ByteString.copyFrom(ciphertext))
+//                                                  .build().toByteArray();
+//
+//    byte[] signature = getSignature(signatureKey, ByteUtil.combine(version, message));
+//
+//    this.serialized       = ByteUtil.combine(version, message, signature);
+//    this.messageVersion   = CURRENT_VERSION;
+//    this.keyId            = keyId;
+//    this.iteration        = iteration;
+//    this.ciphertext       = ciphertext;
   }
 
-  public int getKeyId() {
-    return keyId;
-  }
+//  public int getKeyId() {
+//    return keyId;
+//  }
 
+  public int getChainId() {
+      return this.chainId;
+  }
+  
   public int getIteration() {
     return iteration;
   }
 
   public byte[] getCipherText() {
-    return ciphertext;
+    return cipherText;
   }
 
   public void verifySignature(ECPublicKey signatureKey)

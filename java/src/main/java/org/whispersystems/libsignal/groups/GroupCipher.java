@@ -5,6 +5,7 @@
  */
 package org.whispersystems.libsignal.groups;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.whispersystems.libsignal.DecryptionCallback;
 import org.whispersystems.libsignal.DuplicateMessageException;
 import org.whispersystems.libsignal.InvalidKeyIdException;
@@ -20,6 +21,8 @@ import org.whispersystems.libsignal.protocol.SenderKeyMessage;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.UUID;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -27,6 +30,8 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.whispersystems.libsignal.SignalProtocolAddress;
+import org.whispersystems.libsignal.protocol.SignalProtos;
 
 /**
  * The main entry point for Signal Protocol group encrypt/decrypt operations.
@@ -43,11 +48,13 @@ public class GroupCipher {
   static final Object LOCK = new Object();
 
   private final SenderKeyStore senderKeyStore;
-  private final SenderKeyName senderKeyId;
+  private final SignalProtocolAddress sender;
 
-  public GroupCipher(SenderKeyStore senderKeyStore, SenderKeyName senderKeyId) {
+ // private final SenderKeyName senderKeyId;
+
+  public GroupCipher(SenderKeyStore senderKeyStore, SignalProtocolAddress sender) {
     this.senderKeyStore = senderKeyStore;
-    this.senderKeyId    = senderKeyId;
+    this.sender = sender;
   }
 
   /**
@@ -57,10 +64,10 @@ public class GroupCipher {
    * @return Ciphertext.
    * @throws NoSessionException
    */
-  public byte[] encrypt(byte[] paddedPlaintext) throws NoSessionException {
+  public byte[] encrypt(UUID distributionId, byte[] paddedPlaintext) throws NoSessionException {
     synchronized (LOCK) {
       try {
-        SenderKeyRecord  record         = senderKeyStore.loadSenderKey(senderKeyId);
+        SenderKeyRecord  record         = senderKeyStore.loadSenderKey(sender, distributionId);
         SenderKeyState   senderKeyState = record.getSenderKeyState();
         SenderMessageKey senderKey      = senderKeyState.getSenderChainKey().getSenderMessageKey();
         byte[]           ciphertext     = getCipherText(senderKey.getIv(), senderKey.getCipherKey(), paddedPlaintext);
@@ -72,7 +79,7 @@ public class GroupCipher {
 
         senderKeyState.setSenderChainKey(senderKeyState.getSenderChainKey().getNext());
 
-        senderKeyStore.storeSenderKey(senderKeyId, record);
+        senderKeyStore.storeSenderKey(sender, distributionId, record);
 
         return senderKeyMessage.serialize();
       } catch (InvalidKeyIdException e) {
@@ -117,14 +124,23 @@ public class GroupCipher {
   {
     synchronized (LOCK) {
       try {
-        SenderKeyRecord record = senderKeyStore.loadSenderKey(senderKeyId);
+          System.err.println("skm0 = "+senderKeyMessageBytes[0]);
+          System.err.println("skm = "+Arrays.toString(senderKeyMessageBytes));
+          byte[] skmb = new byte[senderKeyMessageBytes.length-65];
+          System.arraycopy(senderKeyMessageBytes, 1, skmb, 0, skmb.length);
+          System.err.println("decrypt skm, bytes = "+Arrays.toString(skmb));
+          SignalProtos.SenderKeyMessage skm = SignalProtos.SenderKeyMessage.parseFrom(skmb);
+          byte[] distb = skm.getDistributionUuid().toByteArray();
+          UUID uuid = UUID.nameUUIDFromBytes(distb);
+          System.err.println("I need to load senderkey for "+sender+", uuid = "+uuid);
+          SenderKeyRecord record = senderKeyStore.loadSenderKey(sender, uuid);
 
         if (record.isEmpty()) {
-          throw new NoSessionException("No sender key for: " + senderKeyId);
+          throw new NoSessionException("No sender key for: " + sender);
         }
 
         SenderKeyMessage senderKeyMessage = new SenderKeyMessage(senderKeyMessageBytes);
-        SenderKeyState   senderKeyState   = record.getSenderKeyState(senderKeyMessage.getKeyId());
+        SenderKeyState   senderKeyState   = record.getSenderKeyState(senderKeyMessage.getChainId());
 
         senderKeyMessage.verifySignature(senderKeyState.getSigningKeyPublic());
 
@@ -134,12 +150,16 @@ public class GroupCipher {
 
         callback.handlePlaintext(plaintext);
 
-        senderKeyStore.storeSenderKey(senderKeyId, record);
+        senderKeyStore.storeSenderKey(sender, null, record);
 
         return plaintext;
       } catch (org.whispersystems.libsignal.InvalidKeyException | InvalidKeyIdException e) {
         throw new InvalidMessageException(e);
-      }
+      } catch (InvalidProtocolBufferException ex) {
+            ex.printStackTrace();
+                    throw new InvalidMessageException(ex);
+
+        }
     }
   }
 

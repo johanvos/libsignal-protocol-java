@@ -103,10 +103,13 @@ message SenderKeyStateStructure {
         optional bytes private = 2;
     }
 
-    optional uint32           senderKeyId       = 1;
-    optional SenderChainKey   senderChainKey    = 2;
-    optional SenderSigningKey senderSigningKey  = 3;
-    repeated SenderMessageKey senderMessageKeys = 4;
+  optional uint32                    messageVersion     = 5;
+  optional uint32                    chainId            = 1;
+  optional SenderChainKey            senderChainKey    = 2;
+  optional SenderSigningKey          senderSigningKey  = 3;
+  repeated SenderMessageKey senderMessageKeys = 4;
+
+
 }
 
 message SenderKeyRecordStructure {

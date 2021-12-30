@@ -30,9 +30,10 @@ message KeyExchangeMessage {
 }
 
 message SenderKeyMessage {
-  optional uint32 id         = 1;
-  optional uint32 iteration  = 2;
-  optional bytes  ciphertext = 3;
+  optional bytes  distribution_uuid = 1;
+  optional uint32 chain_id          = 2;
+  optional uint32 iteration         = 3;
+  optional bytes  ciphertext        = 4;
 }
 
 message SenderKeyDistributionMessage {

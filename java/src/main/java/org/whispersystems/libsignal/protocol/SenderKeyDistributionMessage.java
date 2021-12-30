@@ -7,6 +7,7 @@ package org.whispersystems.libsignal.protocol;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.UUID;
 
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.InvalidMessageException;
@@ -17,22 +18,24 @@ import org.whispersystems.libsignal.util.ByteUtil;
 
 public class SenderKeyDistributionMessage implements CiphertextMessage {
 
-  private final int         id;
+ // private final int         id;
+    private UUID distributionUuid;
+    private int chainId;
   private final int         iteration;
   private final byte[]      chainKey;
   private final ECPublicKey signatureKey;
   private final byte[]      serialized;
 
-  public SenderKeyDistributionMessage(int id, int iteration, byte[] chainKey, ECPublicKey signatureKey) {
+  public SenderKeyDistributionMessage(int chainId, int iteration, byte[] chainKey, ECPublicKey signatureKey) {
     byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
     byte[] protobuf = SignalProtos.SenderKeyDistributionMessage.newBuilder()
-                                                               .setId(id)
+                                                               .setChainId(chainId)
                                                                .setIteration(iteration)
                                                                .setChainKey(ByteString.copyFrom(chainKey))
                                                                .setSigningKey(ByteString.copyFrom(signatureKey.serialize()))
                                                                .build().toByteArray();
 
-    this.id           = id;
+    this.chainId           = chainId;
     this.iteration    = iteration;
     this.chainKey     = chainKey;
     this.signatureKey = signatureKey;
@@ -55,16 +58,17 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
 
       SignalProtos.SenderKeyDistributionMessage distributionMessage = SignalProtos.SenderKeyDistributionMessage.parseFrom(message);
 
-      if (!distributionMessage.hasId()        ||
-          !distributionMessage.hasIteration() ||
-          !distributionMessage.hasChainKey()  ||
-          !distributionMessage.hasSigningKey())
-      {
-        throw new InvalidMessageException("Incomplete message.");
-      }
+//      if (!distributionMessage.hasId()        ||
+//          !distributionMessage.hasIteration() ||
+//          !distributionMessage.hasChainKey()  ||
+//          !distributionMessage.hasSigningKey())
+//      {
+//        throw new InvalidMessageException("Incomplete message.");
+//      }
 
       this.serialized   = serialized;
-      this.id           = distributionMessage.getId();
+      this.distributionUuid = UUID.nameUUIDFromBytes(distributionMessage.getDistributionUuid().toByteArray());
+      this.chainId        = distributionMessage.getChainId();
       this.iteration    = distributionMessage.getIteration();
       this.chainKey     = distributionMessage.getChainKey().toByteArray();
       this.signatureKey = Curve.decodePoint(distributionMessage.getSigningKey().toByteArray(), 0);
@@ -95,7 +99,11 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
     return signatureKey;
   }
 
-  public int getId() {
-    return id;
+  public int getChainId() {
+    return chainId;
+  }
+  
+  public UUID getDistributionUuid() {
+      return this.distributionUuid;
   }
 }

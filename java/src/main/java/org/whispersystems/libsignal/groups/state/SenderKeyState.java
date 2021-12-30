@@ -59,7 +59,7 @@ public class SenderKeyState {
     }
 
     this.senderKeyStateStructure = SenderKeyStateStructure.newBuilder()
-                                                          .setSenderKeyId(id)
+                                                          .setChainId(id)
                                                           .setSenderChainKey(senderChainKeyStructure)
                                                           .setSenderSigningKey(signingKeyStructure)
                                                           .build();
@@ -70,7 +70,7 @@ public class SenderKeyState {
   }
 
   public int getKeyId() {
-    return senderKeyStateStructure.getSenderKeyId();
+    return senderKeyStateStructure.getChainId();
   }
 
   public SenderChainKey getSenderChainKey() {

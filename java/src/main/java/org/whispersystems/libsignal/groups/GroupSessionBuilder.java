@@ -5,8 +5,10 @@
  */
 package org.whispersystems.libsignal.groups;
 
+import java.util.UUID;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.InvalidKeyIdException;
+import org.whispersystems.libsignal.SignalProtocolAddress;
 import org.whispersystems.libsignal.groups.state.SenderKeyRecord;
 import org.whispersystems.libsignal.groups.state.SenderKeyState;
 import org.whispersystems.libsignal.groups.state.SenderKeyStore;
@@ -43,14 +45,16 @@ public class GroupSessionBuilder {
    * @param senderKeyName The (groupId, senderId, deviceId) tuple associated with the SenderKeyDistributionMessage.
    * @param senderKeyDistributionMessage A received SenderKeyDistributionMessage.
    */
-  public void process(SenderKeyName senderKeyName, SenderKeyDistributionMessage senderKeyDistributionMessage) {
+  public void process( SignalProtocolAddress sender , SenderKeyDistributionMessage senderKeyDistributionMessage) {
     synchronized (GroupCipher.LOCK) {
-      SenderKeyRecord senderKeyRecord = senderKeyStore.loadSenderKey(senderKeyName);
-      senderKeyRecord.addSenderKeyState(senderKeyDistributionMessage.getId(),
+        UUID uuid = senderKeyDistributionMessage.getDistributionUuid();
+      SenderKeyRecord senderKeyRecord = senderKeyStore.loadSenderKey(sender, uuid);
+      senderKeyRecord.addSenderKeyState(senderKeyDistributionMessage.getChainId(),
                                         senderKeyDistributionMessage.getIteration(),
                                         senderKeyDistributionMessage.getChainKey(),
                                         senderKeyDistributionMessage.getSignatureKey());
-      senderKeyStore.storeSenderKey(senderKeyName, senderKeyRecord);
+      senderKeyStore.storeSenderKey(sender, uuid, senderKeyRecord);
+        System.err.println("[GroupSessionBuilder] SenderKeyDistributionMessage stored "+uuid+", sender");
     }
   }
 
@@ -60,17 +64,18 @@ public class GroupSessionBuilder {
    * @param senderKeyName The (groupId, senderId, deviceId) tuple.  In this case, 'senderId' should be the caller.
    * @return A SenderKeyDistributionMessage that is individually distributed to each member of the group.
    */
-  public SenderKeyDistributionMessage create(SenderKeyName senderKeyName) {
+//    public SenderKeyDistributionMessage create(SenderKeyName senderKeyName) {
+  public SenderKeyDistributionMessage create(SignalProtocolAddress sender, UUID distributionId) {
     synchronized (GroupCipher.LOCK) {
       try {
-        SenderKeyRecord senderKeyRecord = senderKeyStore.loadSenderKey(senderKeyName);
+        SenderKeyRecord senderKeyRecord = senderKeyStore.loadSenderKey(sender, distributionId);
 
         if (senderKeyRecord.isEmpty()) {
           senderKeyRecord.setSenderKeyState(KeyHelper.generateSenderKeyId(),
                                             0,
                                             KeyHelper.generateSenderKey(),
                                             KeyHelper.generateSenderSigningKey());
-          senderKeyStore.storeSenderKey(senderKeyName, senderKeyRecord);
+          senderKeyStore.storeSenderKey(sender, distributionId, senderKeyRecord);
         }
 
         SenderKeyState state = senderKeyRecord.getSenderKeyState();

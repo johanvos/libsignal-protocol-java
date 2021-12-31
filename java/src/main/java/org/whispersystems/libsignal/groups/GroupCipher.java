@@ -150,7 +150,7 @@ public class GroupCipher {
 
         callback.handlePlaintext(plaintext);
 
-        senderKeyStore.storeSenderKey(sender, null, record);
+        senderKeyStore.storeSenderKey(sender, uuid, record);
 
         return plaintext;
       } catch (org.whispersystems.libsignal.InvalidKeyException | InvalidKeyIdException e) {

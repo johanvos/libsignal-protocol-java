@@ -31,6 +31,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.whispersystems.libsignal.SignalProtocolAddress;
+import org.whispersystems.libsignal.protocol.CiphertextMessage;
 import org.whispersystems.libsignal.protocol.SignalProtos;
 
 /**
@@ -64,7 +65,7 @@ public class GroupCipher {
    * @return Ciphertext.
    * @throws NoSessionException
    */
-  public byte[] encrypt(UUID distributionId, byte[] paddedPlaintext) throws NoSessionException {
+  public CiphertextMessage encrypt(UUID distributionId, byte[] paddedPlaintext) throws NoSessionException {
     synchronized (LOCK) {
       try {
         SenderKeyRecord  record         = senderKeyStore.loadSenderKey(sender, distributionId);
@@ -81,7 +82,7 @@ public class GroupCipher {
 
         senderKeyStore.storeSenderKey(sender, distributionId, record);
 
-        return senderKeyMessage.serialize();
+        return senderKeyMessage;
       } catch (InvalidKeyIdException e) {
         throw new NoSessionException(e);
       }

@@ -5,6 +5,7 @@
  */
 package org.whispersystems.libsignal.protocol;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -25,10 +26,10 @@ public class SenderKeyMessage implements CiphertextMessage {
   private UUID distributionUuid;
   private int chainId;
   private int iteration;
-  private byte[] cipherText;
-    private  byte[]      serialized;
+  private byte[] ciphertext;
+  private  byte[]      serialized;
 
-//  private  int         messageVersion;
+  private  int         messageVersion;
 //  private  int         keyId;
 //  private  int         iteration;
 //  private  byte[]      ciphertext;
@@ -67,7 +68,7 @@ this.serialized = serialized;
 this.distributionUuid = UUID.nameUUIDFromBytes(senderKeyMessage.getDistributionUuid().toByteArray());
 this.chainId = senderKeyMessage.getChainId();
 this.iteration = senderKeyMessage.getIteration();
-this.cipherText     = senderKeyMessage.getCiphertext().toByteArray();
+this.ciphertext     = senderKeyMessage.getCiphertext().toByteArray();
       
     } catch (InvalidProtocolBufferException | ParseException e) {
       throw new InvalidMessageException(e);
@@ -75,21 +76,20 @@ this.cipherText     = senderKeyMessage.getCiphertext().toByteArray();
   }
 
   public SenderKeyMessage(int keyId, int iteration, byte[] ciphertext, ECPrivateKey signatureKey) {
-throw new RuntimeException("Creation of SKM not yet supported");
-//    byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
-//    byte[] message = SignalProtos.SenderKeyMessage.newBuilder()
-//                                                  .setId(keyId)
-//                                                  .setIteration(iteration)
-//                                                  .setCiphertext(ByteString.copyFrom(ciphertext))
-//                                                  .build().toByteArray();
-//
-//    byte[] signature = getSignature(signatureKey, ByteUtil.combine(version, message));
-//
-//    this.serialized       = ByteUtil.combine(version, message, signature);
-//    this.messageVersion   = CURRENT_VERSION;
-//    this.keyId            = keyId;
-//    this.iteration        = iteration;
-//    this.ciphertext       = ciphertext;
+    byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
+    byte[] message = SignalProtos.SenderKeyMessage.newBuilder()
+                                                  .setChainId(keyId)
+                                                  .setIteration(iteration)
+                                                  .setCiphertext(ByteString.copyFrom(ciphertext))
+                                                  .build().toByteArray();
+
+    byte[] signature = getSignature(signatureKey, ByteUtil.combine(version, message));
+
+    this.serialized       = ByteUtil.combine(version, message, signature);
+    this.messageVersion   = CURRENT_VERSION;
+    this.chainId            = keyId;
+    this.iteration        = iteration;
+    this.ciphertext       = ciphertext;
   }
 
 //  public int getKeyId() {
@@ -105,7 +105,7 @@ throw new RuntimeException("Creation of SKM not yet supported");
   }
 
   public byte[] getCipherText() {
-    return cipherText;
+    return ciphertext;
   }
 
   public void verifySignature(ECPublicKey signatureKey)

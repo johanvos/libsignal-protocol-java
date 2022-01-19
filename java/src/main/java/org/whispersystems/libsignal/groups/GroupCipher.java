@@ -125,15 +125,15 @@ public class GroupCipher {
   {
     synchronized (LOCK) {
       try {
-          System.err.println("skm0 = "+senderKeyMessageBytes[0]);
-          System.err.println("skm = "+Arrays.toString(senderKeyMessageBytes));
+          System.err.println("[GroupCiper] decrypt, senderkeymessageBytes[0] = "+senderKeyMessageBytes[0]);
+          // System.err.println("skm = "+Arrays.toString(senderKeyMessageBytes));
           byte[] skmb = new byte[senderKeyMessageBytes.length-65];
           System.arraycopy(senderKeyMessageBytes, 1, skmb, 0, skmb.length);
-          System.err.println("decrypt skm, bytes = "+Arrays.toString(skmb));
+          // System.err.println("decrypt skm, bytes = "+Arrays.toString(skmb));
           SignalProtos.SenderKeyMessage skm = SignalProtos.SenderKeyMessage.parseFrom(skmb);
           byte[] distb = skm.getDistributionUuid().toByteArray();
           UUID uuid = UUID.nameUUIDFromBytes(distb);
-          System.err.println("I need to load senderkey for "+sender+", uuid = "+uuid);
+          System.err.println("I need to load senderkey for "+sender+", distributionId = "+uuid);
           SenderKeyRecord record = senderKeyStore.loadSenderKey(sender, uuid);
 
         if (record.isEmpty()) {

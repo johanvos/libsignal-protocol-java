@@ -5,7 +5,6 @@
  */
 package org.whispersystems.libsignal.state.impl;
 
-import java.util.HashMap;
 import org.whispersystems.libsignal.SignalProtocolAddress;
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.IdentityKeyPair;
@@ -15,6 +14,8 @@ import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SessionRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -141,8 +142,18 @@ public class InMemorySignalProtocolStore implements SignalProtocolStore {
     }
 
     @Override
-    public SenderKeyRecord loadSenderKey(SignalProtocolAddress sender, UUID uuid) {
-        return senderKeyMap.get(new MySenderKey(sender, uuid));
+    public SenderKeyRecord loadSenderKey(SignalProtocolAddress sender, UUID distributionId) {
+      try {
+          SenderKeyRecord record = senderKeyMap.get(new MySenderKey(sender, distributionId));
+          if (record == null) {
+            return new SenderKeyRecord();
+          } else {
+            return new SenderKeyRecord(record.serialize());
+          }
+      } catch (IOException e) {
+          e.printStackTrace();
+          return null;
+      }
     }
     
     class MySenderKey {

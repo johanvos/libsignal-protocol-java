@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.whispersystems.libsignal.NoSessionException;
 
 public class InMemorySessionStore implements SessionStore {
 
@@ -32,6 +33,23 @@ public class InMemorySessionStore implements SessionStore {
     } catch (IOException e) {
       throw new AssertionError(e);
     }
+  }
+  
+  @Override
+  public synchronized List<SessionRecord> loadExistingSessions(List<SignalProtocolAddress> addresses) throws NoSessionException {
+    List<SessionRecord> resultSessions = new LinkedList<>();
+    for (SignalProtocolAddress remoteAddress : addresses) {
+      byte[] serialized = sessions.get(remoteAddress);
+      if (serialized == null) {
+        throw new NoSessionException("no session for " + remoteAddress);
+      }
+      try {
+        resultSessions.add(new SessionRecord(serialized));
+      } catch (IOException e) {
+        throw new AssertionError(e);
+      }
+    }
+    return resultSessions;
   }
 
   @Override
@@ -56,6 +74,7 @@ public class InMemorySessionStore implements SessionStore {
 
   @Override
   public synchronized boolean containsSession(SignalProtocolAddress address) {
+System.err.println("[SStore] containtsSession asked for " + address+", sessions = " + sessions);
     return sessions.containsKey(address);
   }
 

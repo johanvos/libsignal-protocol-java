@@ -76,8 +76,8 @@ public class GroupCipher {
         SenderKeyMessage senderKeyMessage = new SenderKeyMessage(senderKeyState.getKeyId(),
                                                                  senderKey.getIteration(),
                                                                  ciphertext,
+                distributionId,
                                                                  senderKeyState.getSigningKeyPrivate());
-
         senderKeyState.setSenderChainKey(senderKeyState.getSenderChainKey().getNext());
 
         senderKeyStore.storeSenderKey(sender, distributionId, record);

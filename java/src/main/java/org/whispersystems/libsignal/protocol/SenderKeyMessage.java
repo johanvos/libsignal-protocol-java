@@ -75,10 +75,12 @@ this.ciphertext     = senderKeyMessage.getCiphertext().toByteArray();
     }
   }
 
-  public SenderKeyMessage(int keyId, int iteration, byte[] ciphertext, ECPrivateKey signatureKey) {
+  public SenderKeyMessage(int keyId, int iteration, byte[] ciphertext, 
+          UUID distributionUuid, ECPrivateKey signatureKey) {
     byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
     byte[] message = SignalProtos.SenderKeyMessage.newBuilder()
                                                   .setChainId(keyId)
+            .setDistributionUuid(ByteString.copyFromUtf8(distributionUuid.toString()))
                                                   .setIteration(iteration)
                                                   .setCiphertext(ByteString.copyFrom(ciphertext))
                                                   .build().toByteArray();

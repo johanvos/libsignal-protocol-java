@@ -26,19 +26,22 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
   private final ECPublicKey signatureKey;
   private final byte[]      serialized;
 
-  public SenderKeyDistributionMessage(int chainId, int iteration, byte[] chainKey, ECPublicKey signatureKey) {
+  public SenderKeyDistributionMessage(int chainId, int iteration, byte[] chainKey, 
+          ECPublicKey signatureKey, UUID distributionUuid) {
     byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
     byte[] protobuf = SignalProtos.SenderKeyDistributionMessage.newBuilder()
+            .setDistributionUuid(ByteString.copyFromUtf8(distributionUuid.toString()))
                                                                .setChainId(chainId)
                                                                .setIteration(iteration)
                                                                .setChainKey(ByteString.copyFrom(chainKey))
                                                                .setSigningKey(ByteString.copyFrom(signatureKey.serialize()))
                                                                .build().toByteArray();
 
-    this.chainId           = chainId;
+    this.chainId      = chainId;
     this.iteration    = iteration;
     this.chainKey     = chainKey;
     this.signatureKey = signatureKey;
+    this.distributionUuid = distributionUuid;
     this.serialized   = ByteUtil.combine(version, protobuf);
   }
 
@@ -84,7 +87,7 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
 
   @Override
   public int getType() {
-    return SENDERKEY_DISTRIBUTION_TYPE;
+    return PLAINTEXT_CONTENT_TYPE;
   }
 
   public int getIteration() {

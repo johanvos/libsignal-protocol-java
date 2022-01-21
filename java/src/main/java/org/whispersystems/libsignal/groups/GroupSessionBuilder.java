@@ -48,11 +48,13 @@ public class GroupSessionBuilder {
   public void process( SignalProtocolAddress sender , SenderKeyDistributionMessage senderKeyDistributionMessage) {
     synchronized (GroupCipher.LOCK) {
         UUID uuid = senderKeyDistributionMessage.getDistributionUuid();
+        System.err.println("GROUPSESSIONBUILDER, UUID = "+uuid);
       SenderKeyRecord senderKeyRecord = senderKeyStore.loadSenderKey(sender, uuid);
       senderKeyRecord.addSenderKeyState(senderKeyDistributionMessage.getChainId(),
                                         senderKeyDistributionMessage.getIteration(),
                                         senderKeyDistributionMessage.getChainKey(),
                                         senderKeyDistributionMessage.getSignatureKey());
+        System.err.println("SENDERKEYSTORE = "+this.senderKeyStore+" and record = "+senderKeyRecord);
       senderKeyStore.storeSenderKey(sender, uuid, senderKeyRecord);
         System.err.println("[GroupSessionBuilder] SenderKeyDistributionMessage stored "+uuid+", sender");
     }
@@ -80,10 +82,11 @@ public class GroupSessionBuilder {
 
         SenderKeyState state = senderKeyRecord.getSenderKeyState();
 
-        return new SenderKeyDistributionMessage(state.getKeyId(),
+        SenderKeyDistributionMessage answer = new SenderKeyDistributionMessage(state.getKeyId(),
                                                 state.getSenderChainKey().getIteration(),
                                                 state.getSenderChainKey().getSeed(),
-                                                state.getSigningKeyPublic());
+                                                state.getSigningKeyPublic(), distributionId);
+        return answer;
 
       } catch (InvalidKeyIdException | InvalidKeyException e) {
         throw new AssertionError(e);

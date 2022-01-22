@@ -7,6 +7,8 @@ package org.whispersystems.libsignal.protocol;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.UUID;
 
 import org.whispersystems.libsignal.InvalidKeyException;
@@ -28,6 +30,7 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
 
   public SenderKeyDistributionMessage(int chainId, int iteration, byte[] chainKey, 
           ECPublicKey signatureKey, UUID distributionUuid) {
+      System.err.println("Create SKDM with distid = "+distributionUuid+" or in bytes "+Arrays.toString(distributionUuid.toString().getBytes()));
     byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
     byte[] protobuf = SignalProtos.SenderKeyDistributionMessage.newBuilder()
             .setDistributionUuid(ByteString.copyFromUtf8(distributionUuid.toString()))
@@ -70,7 +73,9 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
 //      }
 
       this.serialized   = serialized;
-      this.distributionUuid = UUID.nameUUIDFromBytes(distributionMessage.getDistributionUuid().toByteArray());
+      String myuuid = distributionMessage.getDistributionUuid().toStringUtf8();
+        System.err.println("MYUUID = "+myuuid);
+      this.distributionUuid = UUID.fromString(myuuid);
       this.chainId        = distributionMessage.getChainId();
       this.iteration    = distributionMessage.getIteration();
       this.chainKey     = distributionMessage.getChainKey().toByteArray();

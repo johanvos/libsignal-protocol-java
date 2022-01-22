@@ -131,8 +131,7 @@ public class GroupCipher {
           System.arraycopy(senderKeyMessageBytes, 1, skmb, 0, skmb.length);
           // System.err.println("decrypt skm, bytes = "+Arrays.toString(skmb));
           SignalProtos.SenderKeyMessage skm = SignalProtos.SenderKeyMessage.parseFrom(skmb);
-          byte[] distb = skm.getDistributionUuid().toByteArray();
-          UUID uuid = UUID.nameUUIDFromBytes(distb);
+          UUID uuid = UUID.fromString(skm.getDistributionUuid().toStringUtf8());
           System.err.println("I need to load senderkey for "+sender+", distributionId = "+uuid);
           SenderKeyRecord record = senderKeyStore.loadSenderKey(sender, uuid);
 

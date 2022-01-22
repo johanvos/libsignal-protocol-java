@@ -16,19 +16,15 @@ public class InMemorySenderKeyStore implements SenderKeyStore {
 
   @Override
   public void storeSenderKey(SignalProtocolAddress sender, UUID distributionId, SenderKeyRecord record) {
-      System.err.println("store senderkey for "+sender+" and uuid = "+distributionId);
       store.put(new Pair(sender, distributionId), record);
   }
 
   @Override
   public SenderKeyRecord loadSenderKey(SignalProtocolAddress sender, UUID distributionId) {
-            System.err.println("ask senderkey for "+sender+" and uuid = "+distributionId);
-
     try {
       SenderKeyRecord record = store.get(new Pair(sender, distributionId));
 
       if (record == null) {
-System.err.println("no record found, db = " + store);
         return new SenderKeyRecord();
       } else {
         return new SenderKeyRecord(record.serialize());

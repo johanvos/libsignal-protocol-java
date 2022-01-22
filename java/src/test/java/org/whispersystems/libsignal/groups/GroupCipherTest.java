@@ -25,7 +25,6 @@ public class GroupCipherTest extends TestCase {
   private static final SignalProtocolAddress SENDER_ADDRESS = new SignalProtocolAddress("+14150001111", 1);
   private static final UUID DISTRIBUTION_ID = UUID.fromString("d1d1d1d1-7000-11eb-b32a-33b8a8a487a6");
 
-/*
   public void testNoSession() throws InvalidMessageException, LegacyMessageException, NoSessionException, DuplicateMessageException {
     InMemorySenderKeyStore aliceStore = new InMemorySenderKeyStore();
     InMemorySenderKeyStore bobStore   = new InMemorySenderKeyStore();
@@ -56,15 +55,24 @@ public class GroupCipherTest extends TestCase {
     InMemorySenderKeyStore aliceStore = new InMemorySenderKeyStore();
     InMemorySenderKeyStore bobStore   = new InMemorySenderKeyStore();
 
+System.err.println("Create ASB");
     GroupSessionBuilder aliceSessionBuilder = new GroupSessionBuilder(aliceStore);
+System.err.println("Create BSB");
     GroupSessionBuilder bobSessionBuilder   = new GroupSessionBuilder(bobStore);
 
+System.err.println("Create AGC");
     GroupCipher aliceGroupCipher = new GroupCipher(aliceStore, SENDER_ADDRESS);
+System.err.println("Create BGC");
     GroupCipher bobGroupCipher   = new GroupCipher(bobStore, SENDER_ADDRESS);
 
+System.err.println("Create SADM");
     SenderKeyDistributionMessage sentAliceDistributionMessage     = aliceSessionBuilder.create(SENDER_ADDRESS, DISTRIBUTION_ID);
+System.err.println("Create SBDM");
     SenderKeyDistributionMessage receivedAliceDistributionMessage = new SenderKeyDistributionMessage(sentAliceDistributionMessage.serialize());
-    bobSessionBuilder.process(SENDER_ADDRESS, receivedAliceDistributionMessage);
+System.err.println("Create BSBp");
+    // bobSessionBuilder.process(SENDER_ADDRESS, receivedAliceDistributionMessage);
+    bobSessionBuilder.process(SENDER_ADDRESS, sentAliceDistributionMessage);
+System.err.println("Create BSBp done");
 
     CiphertextMessage ciphertextFromAlice = aliceGroupCipher.encrypt(DISTRIBUTION_ID, "smert ze smert".getBytes());
     byte[] plaintextFromAlice  = bobGroupCipher.decrypt(ciphertextFromAlice.serialize());
@@ -197,7 +205,6 @@ public class GroupCipherTest extends TestCase {
       assertTrue(new String(plaintext).equals("up the punks"));
     }
   }
-/*
 
   public void testEncryptNoSession() {
     InMemorySenderKeyStore aliceStore = new InMemorySenderKeyStore();
@@ -268,7 +275,6 @@ public class GroupCipherTest extends TestCase {
       // good
     }
   }
-*/
 
 
   private int randomInt() {

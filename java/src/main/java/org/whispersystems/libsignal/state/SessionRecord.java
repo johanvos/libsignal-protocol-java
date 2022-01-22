@@ -123,8 +123,7 @@ public class SessionRecord {
   }
 
   public int getRemoteRegistrationId() {
-      return 1;
-// throw new RuntimeException("IMPLEMENT ME!");
+      return sessionState.getRemoteRegistrationId();
   }
 
 }

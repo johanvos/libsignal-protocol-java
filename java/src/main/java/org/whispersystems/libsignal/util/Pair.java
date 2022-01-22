@@ -37,4 +37,11 @@ public class Pair<T1, T2> {
     if (first == null || second == null) return false;
     return first.equals(second);
   }
+
+  @Override
+  public String toString() {
+      if (v1 == null) return "Pair with v1 null";
+      if (v2 == null) return "Pair with v2 null";
+      return "pair with ("+v1+","+v2+")";
+  }
 }

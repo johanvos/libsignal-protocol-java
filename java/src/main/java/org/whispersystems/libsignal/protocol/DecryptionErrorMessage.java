@@ -5,10 +5,52 @@
  */
 package org.whispersystems.libsignal.protocol;
 
-import org.whispersystems.libsignal.InvalidMessageException;
-import org.whispersystems.libsignal.ecc.ECPublicKey;
+import java.io.ByteArrayOutputStream;
 
 public final class DecryptionErrorMessage {
+
+    private final byte[] originalBytes;
+    private final int messageType;
+    private final long timestamp;
+    private final int originalSenderDeviceId;
+
+    private DecryptionErrorMessage(byte[] originalBytes, int messageType, long timestamp, int originalSenderDeviceId) {
+        this.originalBytes = originalBytes;
+        this.messageType = messageType;
+        this.timestamp = timestamp;
+        this.originalSenderDeviceId = originalSenderDeviceId;
+    }
+
+    public static DecryptionErrorMessage forOriginalMessage(byte[] originalBytes, int messageType, long timestamp, int originalSenderDeviceId) {
+        return new DecryptionErrorMessage(originalBytes, messageType, timestamp, originalSenderDeviceId);
+    }
+    
+    public byte[] serialize() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos.writeBytes(originalBytes);
+        baos.writeBytes(intToBytes(messageType));
+        baos.writeBytes(longToBytes(timestamp));
+        baos.writeBytes(intToBytes(originalSenderDeviceId));
+        return baos.toByteArray();
+    }
+
+    private byte[] intToBytes(int val) {
+        byte[] answer = new byte[4];
+        for (int i = 0; i < 4; i++) {
+            answer[3 - i] = (byte) (val & 0xFF);
+            val >>= 8;
+        }
+        return answer;
+    }
+    
+    private byte[] longToBytes(long val) {
+        byte[] answer = new byte[8];
+        for (int i = 0; i < 8; i++) {
+            answer[7 - i] = (byte) (val & 0xFF);
+            val >>= 8;
+        }
+        return answer;
+    }
 }
 /*
 

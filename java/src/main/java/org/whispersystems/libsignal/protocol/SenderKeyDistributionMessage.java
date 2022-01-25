@@ -9,6 +9,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.logging.Logger;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.InvalidMessageException;
 import org.whispersystems.libsignal.LegacyMessageException;
@@ -25,10 +26,11 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
     private final byte[] chainKey;
     private final ECPublicKey signatureKey;
     private final byte[] serialized;
+    private static final Logger LOG = Logger.getLogger(SenderKeyDistributionMessage.class.getName());
 
     public SenderKeyDistributionMessage(int chainId, int iteration, byte[] chainKey,
             ECPublicKey signatureKey, UUID distributionUuid) {
-        System.err.println("Create SKDM with distid = " + distributionUuid + " or in bytes " + Arrays.toString(distributionUuid.toString().getBytes()));
+        LOG.info("Create SKDM with distid = " + distributionUuid);
         byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
         byte[] uuidBytes = UUIDUtil.serialize(distributionUuid);
         byte[] protobuf = SignalProtos.SenderKeyDistributionMessage.newBuilder()
@@ -44,15 +46,15 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
         this.chainKey = chainKey;
         this.signatureKey = signatureKey;
         this.distributionUuid = distributionUuid;
-        System.err.println("Serialized skdm with chainid = " + this.chainId + " and iteration = " + iteration
+        LOG.fine("Serialized skdm with chainid = " + this.chainId + " and iteration = " + iteration
                 + " and chainkey = " + chainKey + " and signing key = " + Arrays.toString(this.signatureKey.serialize()));
         this.serialized = ByteUtil.combine(version, protobuf);
-        System.err.println("SKDM serialized = " + Arrays.toString(this.serialized));
+        LOG.fine("SKDM serialized = " + Arrays.toString(this.serialized));
     }
 
     public SenderKeyDistributionMessage(byte[] serialized) throws LegacyMessageException, InvalidMessageException {
         try {
-            System.err.println("[SKDM] need to deserialize incoming skdm: " + Arrays.toString(serialized));
+            LOG.fine("[SKDM] need to deserialize incoming skdm: " + Arrays.toString(serialized));
             byte[][] messageParts = ByteUtil.split(serialized, 1, serialized.length - 1);
             byte version = messageParts[0][0];
             byte[] message = messageParts[1];

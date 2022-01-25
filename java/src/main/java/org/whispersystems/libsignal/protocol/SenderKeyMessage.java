@@ -7,7 +7,9 @@ package org.whispersystems.libsignal.protocol;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-
+import java.text.ParseException;
+import java.util.UUID;
+import java.util.logging.Logger;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.InvalidMessageException;
 import org.whispersystems.libsignal.LegacyMessageException;
@@ -15,9 +17,6 @@ import org.whispersystems.libsignal.ecc.Curve;
 import org.whispersystems.libsignal.ecc.ECPrivateKey;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.util.ByteUtil;
-
-import java.text.ParseException;
-import java.util.UUID;
 import org.whispersystems.libsignal.util.UUIDUtil;
 
 public class SenderKeyMessage implements CiphertextMessage {
@@ -31,10 +30,8 @@ public class SenderKeyMessage implements CiphertextMessage {
   private  byte[]      serialized;
 
   private  int         messageVersion;
-//  private  int         keyId;
-//  private  int         iteration;
-//  private  byte[]      ciphertext;
-//  private  byte[]      serialized;
+  
+    private static final Logger LOG = Logger.getLogger(SenderKeyMessage.class.getName());
 
   public SenderKeyMessage(byte[] serialized) throws InvalidMessageException, LegacyMessageException {
     try {
@@ -52,7 +49,7 @@ public class SenderKeyMessage implements CiphertextMessage {
       }
 
       SignalProtos.SenderKeyMessage senderKeyMessage = SignalProtos.SenderKeyMessage.parseFrom(message);
-        System.err.println("DISTID = " + senderKeyMessage.getDistributionUuid());   
+      LOG.fine("DISTID = " + senderKeyMessage.getDistributionUuid());   
       
       if (!senderKeyMessage.hasDistributionUuid() ||
           !senderKeyMessage.hasIteration() ||
@@ -60,17 +57,12 @@ public class SenderKeyMessage implements CiphertextMessage {
       {
         throw new InvalidMessageException("Incomplete message.");
       }
-//
-//      this.serialized     = serialized;
-//      this.messageVersion = ByteUtil.highBitsToInt(version);
-//      this.keyId          = senderKeyMessage.getId();
-//      this.iteration      = senderKeyMessage.getIteration();
-this.serialized = serialized;
-this.distributionUuid = UUIDUtil.deserialize(senderKeyMessage.getDistributionUuid().toByteArray());
-this.chainId = senderKeyMessage.getChainId();
-this.iteration = senderKeyMessage.getIteration();
-this.ciphertext     = senderKeyMessage.getCiphertext().toByteArray();
-      
+        this.serialized = serialized;
+        this.distributionUuid = UUIDUtil.deserialize(senderKeyMessage.getDistributionUuid().toByteArray());
+        this.chainId = senderKeyMessage.getChainId();
+        this.iteration = senderKeyMessage.getIteration();
+        this.ciphertext = senderKeyMessage.getCiphertext().toByteArray();
+
     } catch (InvalidProtocolBufferException | ParseException e) {
       throw new InvalidMessageException(e);
     }
@@ -95,9 +87,6 @@ this.ciphertext     = senderKeyMessage.getCiphertext().toByteArray();
     this.ciphertext       = ciphertext;
   }
 
-//  public int getKeyId() {
-//    return keyId;
-//  }
 
   public int getChainId() {
       return this.chainId;

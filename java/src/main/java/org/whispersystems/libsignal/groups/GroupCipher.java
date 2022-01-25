@@ -6,32 +6,30 @@
 package org.whispersystems.libsignal.groups;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.whispersystems.libsignal.DecryptionCallback;
-import org.whispersystems.libsignal.DuplicateMessageException;
-import org.whispersystems.libsignal.InvalidKeyIdException;
-import org.whispersystems.libsignal.InvalidMessageException;
-import org.whispersystems.libsignal.LegacyMessageException;
-import org.whispersystems.libsignal.NoSessionException;
-import org.whispersystems.libsignal.groups.ratchet.SenderChainKey;
-import org.whispersystems.libsignal.groups.ratchet.SenderMessageKey;
-import org.whispersystems.libsignal.groups.state.SenderKeyRecord;
-import org.whispersystems.libsignal.groups.state.SenderKeyState;
-import org.whispersystems.libsignal.groups.state.SenderKeyStore;
-import org.whispersystems.libsignal.protocol.SenderKeyMessage;
-
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.UUID;
-
+import java.util.logging.Logger;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.whispersystems.libsignal.DecryptionCallback;
+import org.whispersystems.libsignal.DuplicateMessageException;
+import org.whispersystems.libsignal.InvalidKeyIdException;
+import org.whispersystems.libsignal.InvalidMessageException;
+import org.whispersystems.libsignal.LegacyMessageException;
+import org.whispersystems.libsignal.NoSessionException;
 import org.whispersystems.libsignal.SignalProtocolAddress;
+import org.whispersystems.libsignal.groups.ratchet.SenderChainKey;
+import org.whispersystems.libsignal.groups.ratchet.SenderMessageKey;
+import org.whispersystems.libsignal.groups.state.SenderKeyRecord;
+import org.whispersystems.libsignal.groups.state.SenderKeyState;
+import org.whispersystems.libsignal.groups.state.SenderKeyStore;
 import org.whispersystems.libsignal.protocol.CiphertextMessage;
+import org.whispersystems.libsignal.protocol.SenderKeyMessage;
 import org.whispersystems.libsignal.protocol.SignalProtos;
 import org.whispersystems.libsignal.util.UUIDUtil;
 
@@ -51,6 +49,9 @@ public class GroupCipher {
 
   private final SenderKeyStore senderKeyStore;
   private final SignalProtocolAddress sender;
+  
+    private static final Logger LOG = Logger.getLogger(GroupCipher.class.getName());
+
 
  // private final SenderKeyName senderKeyId;
 
@@ -126,14 +127,14 @@ public class GroupCipher {
   {
     synchronized (LOCK) {
       try {
-          System.err.println("[GroupCiper] decrypt, senderkeymessageBytes[0] = "+senderKeyMessageBytes[0]);
+          LOG.info("[GroupCiper] decrypt, senderkeymessageBytes[0] = "+senderKeyMessageBytes[0]);
           // System.err.println("skm = "+Arrays.toString(senderKeyMessageBytes));
           byte[] skmb = new byte[senderKeyMessageBytes.length-65];
           System.arraycopy(senderKeyMessageBytes, 1, skmb, 0, skmb.length);
           // System.err.println("decrypt skm, bytes = "+Arrays.toString(skmb));
           SignalProtos.SenderKeyMessage skm = SignalProtos.SenderKeyMessage.parseFrom(skmb);
           UUID uuid = UUIDUtil.deserialize(skm.getDistributionUuid().toByteArray());
-          System.err.println("I need to load senderkey for "+sender+", distributionId = "+uuid);
+          LOG.fine("I need to load senderkey for "+sender+", distributionId = "+uuid);
           SenderKeyRecord record = senderKeyStore.loadSenderKey(sender, uuid);
 
         if (record.isEmpty()) {

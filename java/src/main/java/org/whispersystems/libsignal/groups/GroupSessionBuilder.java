@@ -6,6 +6,7 @@
 package org.whispersystems.libsignal.groups;
 
 import java.util.UUID;
+import java.util.logging.Logger;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.InvalidKeyIdException;
 import org.whispersystems.libsignal.SignalProtocolAddress;
@@ -34,7 +35,9 @@ import org.whispersystems.libsignal.util.KeyHelper;
 public class GroupSessionBuilder {
 
   private final SenderKeyStore senderKeyStore;
-
+  
+  static final Logger logger = Logger.getLogger(GroupSessionBuilder.class.getName());
+  
   public GroupSessionBuilder(SenderKeyStore senderKeyStore) {
     this.senderKeyStore = senderKeyStore;
   }
@@ -42,21 +45,21 @@ public class GroupSessionBuilder {
   /**
    * Construct a group session for receiving messages from senderKeyName.
    *
-   * @param senderKeyName The (groupId, senderId, deviceId) tuple associated with the SenderKeyDistributionMessage.
+   * @param sender The address associated with the SenderKeyDistributionMessage.
    * @param senderKeyDistributionMessage A received SenderKeyDistributionMessage.
    */
   public void process( SignalProtocolAddress sender , SenderKeyDistributionMessage senderKeyDistributionMessage) {
     synchronized (GroupCipher.LOCK) {
         UUID uuid = senderKeyDistributionMessage.getDistributionUuid();
-        System.err.println("GROUPSESSIONBUILDER, UUID = "+uuid);
+        logger.info("Process GroupSessionBuilder for UUID = "+uuid);
       SenderKeyRecord senderKeyRecord = senderKeyStore.loadSenderKey(sender, uuid);
       senderKeyRecord.addSenderKeyState(senderKeyDistributionMessage.getChainId(),
                                         senderKeyDistributionMessage.getIteration(),
                                         senderKeyDistributionMessage.getChainKey(),
                                         senderKeyDistributionMessage.getSignatureKey());
-        System.err.println("SENDERKEYSTORE = "+this.senderKeyStore+" and record = "+senderKeyRecord);
+        logger.fine("SENDERKEYSTORE = "+this.senderKeyStore+" and record = "+senderKeyRecord);
       senderKeyStore.storeSenderKey(sender, uuid, senderKeyRecord);
-        System.err.println("[GroupSessionBuilder] SenderKeyDistributionMessage stored "+uuid+", sender");
+        logger.fine("[GroupSessionBuilder] SenderKeyDistributionMessage stored "+uuid+", sender");
     }
   }
 

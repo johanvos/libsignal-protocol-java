@@ -97,13 +97,11 @@ public class InMemorySignalProtocolStore implements SignalProtocolStore {
 
   @Override
   public void storeSession(SignalProtocolAddress address, SessionRecord record) {
-System.err.println("Store session for " + address);
     sessionStore.storeSession(address, record);
   }
 
   @Override
   public boolean containsSession(SignalProtocolAddress address) {
-System.err.println("containsSession asked for " + address+", store  = " + sessionStore);
     return sessionStore.containsSession(address);
   }
 
@@ -146,14 +144,12 @@ System.err.println("containsSession asked for " + address+", store  = " + sessio
   
     @Override
     public void storeSenderKey(SignalProtocolAddress sender, UUID uuid, SenderKeyRecord record) {
-System.err.println("[STORE] storeSK, sender = " + sender+", uuid = " + uuid+", rec = " + record);
         senderKeyMap.put(new MySenderKey(sender, uuid), record);
     }
 
     @Override
     public SenderKeyRecord loadSenderKey(SignalProtocolAddress sender, UUID distributionId) {
       try {
-System.err.println("[STORE] loadSK, sender = " + sender+", uuid = " + distributionId);
           SenderKeyRecord record = senderKeyMap.get(new MySenderKey(sender, distributionId));
           if (record == null) {
             return new SenderKeyRecord();

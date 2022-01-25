@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package org.whispersystems.libsignal.protocol;
-import org.whispersystems.libsignal.protocol.SignalProtos.DecryptionErrorMessage;
+//import org.whispersystems.libsignal.protocol.SignalProtos.DecryptionErrorMessage;
 
 /**
  *
@@ -18,7 +18,7 @@ public class PlaintextContent implements CiphertextMessage {
     
       public PlaintextContent(DecryptionErrorMessage message) {
           this.message = message;
-          this.serialized = message.toByteArray();
+          this.serialized = message.serialize();
       }
       
     @Override
@@ -28,7 +28,7 @@ public class PlaintextContent implements CiphertextMessage {
 
     @Override
     public int getType() {
-throw new UnsupportedOperationException();
+        return PLAINTEXT_CONTENT_TYPE;
     }
     
     public byte[] getBody() {

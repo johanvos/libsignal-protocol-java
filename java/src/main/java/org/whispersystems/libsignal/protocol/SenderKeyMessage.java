@@ -5,8 +5,11 @@
  */
 package org.whispersystems.libsignal.protocol;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-
+import java.text.ParseException;
+import java.util.UUID;
+import java.util.logging.Logger;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.InvalidMessageException;
 import org.whispersystems.libsignal.LegacyMessageException;
@@ -14,9 +17,7 @@ import org.whispersystems.libsignal.ecc.Curve;
 import org.whispersystems.libsignal.ecc.ECPrivateKey;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.util.ByteUtil;
-
-import java.text.ParseException;
-import java.util.UUID;
+import org.whispersystems.libsignal.util.UUIDUtil;
 
 public class SenderKeyMessage implements CiphertextMessage {
 
@@ -25,14 +26,12 @@ public class SenderKeyMessage implements CiphertextMessage {
   private UUID distributionUuid;
   private int chainId;
   private int iteration;
-  private byte[] cipherText;
-    private  byte[]      serialized;
+  private byte[] ciphertext;
+  private  byte[]      serialized;
 
-//  private  int         messageVersion;
-//  private  int         keyId;
-//  private  int         iteration;
-//  private  byte[]      ciphertext;
-//  private  byte[]      serialized;
+  private  int         messageVersion;
+  
+    private static final Logger LOG = Logger.getLogger(SenderKeyMessage.class.getName());
 
   public SenderKeyMessage(byte[] serialized) throws InvalidMessageException, LegacyMessageException {
     try {
@@ -50,51 +49,44 @@ public class SenderKeyMessage implements CiphertextMessage {
       }
 
       SignalProtos.SenderKeyMessage senderKeyMessage = SignalProtos.SenderKeyMessage.parseFrom(message);
-        System.err.println("DISTID = " + senderKeyMessage.getDistributionUuid());   
+      LOG.fine("DISTID = " + senderKeyMessage.getDistributionUuid());   
       
-//      if (!senderKeyMessage.hasId() ||
-//          !senderKeyMessage.hasIteration() ||
-//          !senderKeyMessage.hasCiphertext())
-//      {
-//        throw new InvalidMessageException("Incomplete message.");
-//      }
-//
-//      this.serialized     = serialized;
-//      this.messageVersion = ByteUtil.highBitsToInt(version);
-//      this.keyId          = senderKeyMessage.getId();
-//      this.iteration      = senderKeyMessage.getIteration();
-this.serialized = serialized;
-this.distributionUuid = UUID.nameUUIDFromBytes(senderKeyMessage.getDistributionUuid().toByteArray());
-this.chainId = senderKeyMessage.getChainId();
-this.iteration = senderKeyMessage.getIteration();
-this.cipherText     = senderKeyMessage.getCiphertext().toByteArray();
-      
+      if (!senderKeyMessage.hasDistributionUuid() ||
+          !senderKeyMessage.hasIteration() ||
+          !senderKeyMessage.hasCiphertext())
+      {
+        throw new InvalidMessageException("Incomplete message.");
+      }
+        this.serialized = serialized;
+        this.distributionUuid = UUIDUtil.deserialize(senderKeyMessage.getDistributionUuid().toByteArray());
+        this.chainId = senderKeyMessage.getChainId();
+        this.iteration = senderKeyMessage.getIteration();
+        this.ciphertext = senderKeyMessage.getCiphertext().toByteArray();
+
     } catch (InvalidProtocolBufferException | ParseException e) {
       throw new InvalidMessageException(e);
     }
   }
 
-  public SenderKeyMessage(int keyId, int iteration, byte[] ciphertext, ECPrivateKey signatureKey) {
-throw new RuntimeException("Creation of SKM not yet supported");
-//    byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
-//    byte[] message = SignalProtos.SenderKeyMessage.newBuilder()
-//                                                  .setId(keyId)
-//                                                  .setIteration(iteration)
-//                                                  .setCiphertext(ByteString.copyFrom(ciphertext))
-//                                                  .build().toByteArray();
-//
-//    byte[] signature = getSignature(signatureKey, ByteUtil.combine(version, message));
-//
-//    this.serialized       = ByteUtil.combine(version, message, signature);
-//    this.messageVersion   = CURRENT_VERSION;
-//    this.keyId            = keyId;
-//    this.iteration        = iteration;
-//    this.ciphertext       = ciphertext;
+  public SenderKeyMessage(int keyId, int iteration, byte[] ciphertext, 
+          UUID distributionUuid, ECPrivateKey signatureKey) {
+    byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
+    byte[] message = SignalProtos.SenderKeyMessage.newBuilder()
+                                                  .setChainId(keyId)
+            .setDistributionUuid(ByteString.copyFrom(UUIDUtil.serialize(distributionUuid)))
+                                                  .setIteration(iteration)
+                                                  .setCiphertext(ByteString.copyFrom(ciphertext))
+                                                  .build().toByteArray();
+
+    byte[] signature = getSignature(signatureKey, ByteUtil.combine(version, message));
+
+    this.serialized       = ByteUtil.combine(version, message, signature);
+    this.messageVersion   = CURRENT_VERSION;
+    this.chainId            = keyId;
+    this.iteration        = iteration;
+    this.ciphertext       = ciphertext;
   }
 
-//  public int getKeyId() {
-//    return keyId;
-//  }
 
   public int getChainId() {
       return this.chainId;
@@ -105,7 +97,7 @@ throw new RuntimeException("Creation of SKM not yet supported");
   }
 
   public byte[] getCipherText() {
-    return cipherText;
+    return ciphertext;
   }
 
   public void verifySignature(ECPublicKey signatureKey)

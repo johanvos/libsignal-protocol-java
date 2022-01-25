@@ -1,5 +1,6 @@
 module org.whispersystems.protocol {
     requires com.google.protobuf;
+    requires java.logging;
     requires org.whispersystems.curve25519;
     exports org.whispersystems.libsignal;
     exports org.whispersystems.libsignal.ecc;

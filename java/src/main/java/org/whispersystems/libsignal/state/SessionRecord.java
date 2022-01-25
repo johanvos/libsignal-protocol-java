@@ -122,4 +122,8 @@ public class SessionRecord {
     return record.toByteArray();
   }
 
+  public int getRemoteRegistrationId() {
+      return sessionState.getRemoteRegistrationId();
+  }
+
 }

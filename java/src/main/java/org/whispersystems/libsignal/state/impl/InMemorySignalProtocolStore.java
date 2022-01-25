@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.whispersystems.libsignal.NoSessionException;
 import org.whispersystems.libsignal.groups.SenderKeyName;
 import org.whispersystems.libsignal.groups.state.SenderKeyRecord;
 
@@ -82,6 +83,11 @@ public class InMemorySignalProtocolStore implements SignalProtocolStore {
   @Override
   public SessionRecord loadSession(SignalProtocolAddress address) {
     return sessionStore.loadSession(address);
+  }
+
+  @Override
+  public List<SessionRecord> loadExistingSessions(List<SignalProtocolAddress> addresses) throws NoSessionException {
+    return sessionStore.loadExistingSessions(addresses);
   }
 
   @Override

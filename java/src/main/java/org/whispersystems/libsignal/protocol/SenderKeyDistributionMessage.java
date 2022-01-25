@@ -8,6 +8,7 @@ package org.whispersystems.libsignal.protocol;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -17,6 +18,7 @@ import org.whispersystems.libsignal.LegacyMessageException;
 import org.whispersystems.libsignal.ecc.Curve;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.util.ByteUtil;
+import org.whispersystems.libsignal.util.UUIDUtil;
 
 public class SenderKeyDistributionMessage implements CiphertextMessage {
 
@@ -31,25 +33,30 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
   public SenderKeyDistributionMessage(int chainId, int iteration, byte[] chainKey, 
           ECPublicKey signatureKey, UUID distributionUuid) {
       System.err.println("Create SKDM with distid = "+distributionUuid+" or in bytes "+Arrays.toString(distributionUuid.toString().getBytes()));
-    byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
-    byte[] protobuf = SignalProtos.SenderKeyDistributionMessage.newBuilder()
-            .setDistributionUuid(ByteString.copyFromUtf8(distributionUuid.toString()))
-                                                               .setChainId(chainId)
-                                                               .setIteration(iteration)
-                                                               .setChainKey(ByteString.copyFrom(chainKey))
-                                                               .setSigningKey(ByteString.copyFrom(signatureKey.serialize()))
-                                                               .build().toByteArray();
+      byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
+      byte[] uuidBytes = UUIDUtil.serialize(distributionUuid);
+      byte[] protobuf = SignalProtos.SenderKeyDistributionMessage.newBuilder()
+            .setDistributionUuid(ByteString.copyFrom(uuidBytes))
+            .setChainId(chainId)
+            .setIteration(iteration)
+            .setChainKey(ByteString.copyFrom(chainKey))
+            .setSigningKey(ByteString.copyFrom(signatureKey.serialize()))
+            .build().toByteArray();
 
     this.chainId      = chainId;
     this.iteration    = iteration;
     this.chainKey     = chainKey;
     this.signatureKey = signatureKey;
     this.distributionUuid = distributionUuid;
+      System.err.println("Serialized skdm with chainid = "+this.chainId+" and iteration = "+iteration+
+              " and chainkey = " + chainKey+" and signing key = " + Arrays.toString(this.signatureKey.serialize()));
     this.serialized   = ByteUtil.combine(version, protobuf);
+      System.err.println("SKDM serialized = "+ Arrays.toString(this.serialized));
   }
 
   public SenderKeyDistributionMessage(byte[] serialized) throws LegacyMessageException, InvalidMessageException {
     try {
+        System.err.println("[SKDM] need to deserialize incoming skdm: "+Arrays.toString(serialized));
       byte[][] messageParts = ByteUtil.split(serialized, 1, serialized.length - 1);
       byte     version      = messageParts[0][0];
       byte[]   message      = messageParts[1];
@@ -64,18 +71,22 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
 
       SignalProtos.SenderKeyDistributionMessage distributionMessage = SignalProtos.SenderKeyDistributionMessage.parseFrom(message);
 
-//      if (!distributionMessage.hasId()        ||
-//          !distributionMessage.hasIteration() ||
-//          !distributionMessage.hasChainKey()  ||
-//          !distributionMessage.hasSigningKey())
-//      {
-//        throw new InvalidMessageException("Incomplete message.");
-//      }
+      if (!distributionMessage.hasDistributionUuid()||
+          !distributionMessage.hasIteration() ||
+          !distributionMessage.hasChainKey()  ||
+          !distributionMessage.hasSigningKey())
+      {
+        throw new InvalidMessageException("Incomplete message.");
+      }
 
       this.serialized   = serialized;
-      String myuuid = distributionMessage.getDistributionUuid().toStringUtf8();
-        System.err.println("MYUUID = "+myuuid);
-      this.distributionUuid = UUID.fromString(myuuid);
+      this.distributionUuid = UUIDUtil.deserialize(distributionMessage.getDistributionUuid().toByteArray());
+//      String myuuid = distributionMessage.getDistributionUuid().toStringUtf8();
+//        System.err.println("MYUUID = "+myuuid);
+//        byte[] uuidba = distributionMessage.getDistributionUuid().toByteArray();
+//        String muuid = new String(uuidba,StandardCharsets.UTF_8);
+//        System.err.println("Or myuuid = "+muuid);
+//      this.distributionUuid = UUID.fromString(myuuid);
       this.chainId        = distributionMessage.getChainId();
       this.iteration    = distributionMessage.getIteration();
       this.chainKey     = distributionMessage.getChainKey().toByteArray();

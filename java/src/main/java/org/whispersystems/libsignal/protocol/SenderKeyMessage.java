@@ -18,6 +18,7 @@ import org.whispersystems.libsignal.util.ByteUtil;
 
 import java.text.ParseException;
 import java.util.UUID;
+import org.whispersystems.libsignal.util.UUIDUtil;
 
 public class SenderKeyMessage implements CiphertextMessage {
 
@@ -53,19 +54,19 @@ public class SenderKeyMessage implements CiphertextMessage {
       SignalProtos.SenderKeyMessage senderKeyMessage = SignalProtos.SenderKeyMessage.parseFrom(message);
         System.err.println("DISTID = " + senderKeyMessage.getDistributionUuid());   
       
-//      if (!senderKeyMessage.hasId() ||
-//          !senderKeyMessage.hasIteration() ||
-//          !senderKeyMessage.hasCiphertext())
-//      {
-//        throw new InvalidMessageException("Incomplete message.");
-//      }
+      if (!senderKeyMessage.hasDistributionUuid() ||
+          !senderKeyMessage.hasIteration() ||
+          !senderKeyMessage.hasCiphertext())
+      {
+        throw new InvalidMessageException("Incomplete message.");
+      }
 //
 //      this.serialized     = serialized;
 //      this.messageVersion = ByteUtil.highBitsToInt(version);
 //      this.keyId          = senderKeyMessage.getId();
 //      this.iteration      = senderKeyMessage.getIteration();
 this.serialized = serialized;
-this.distributionUuid = UUID.nameUUIDFromBytes(senderKeyMessage.getDistributionUuid().toByteArray());
+this.distributionUuid = UUIDUtil.deserialize(senderKeyMessage.getDistributionUuid().toByteArray());
 this.chainId = senderKeyMessage.getChainId();
 this.iteration = senderKeyMessage.getIteration();
 this.ciphertext     = senderKeyMessage.getCiphertext().toByteArray();
@@ -80,7 +81,7 @@ this.ciphertext     = senderKeyMessage.getCiphertext().toByteArray();
     byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
     byte[] message = SignalProtos.SenderKeyMessage.newBuilder()
                                                   .setChainId(keyId)
-            .setDistributionUuid(ByteString.copyFromUtf8(distributionUuid.toString()))
+            .setDistributionUuid(ByteString.copyFrom(UUIDUtil.serialize(distributionUuid)))
                                                   .setIteration(iteration)
                                                   .setCiphertext(ByteString.copyFrom(ciphertext))
                                                   .build().toByteArray();

@@ -179,8 +179,6 @@ public class SessionCipher {
       throws DuplicateMessageException, LegacyMessageException, InvalidMessageException,
              InvalidKeyIdException, InvalidKeyException, UntrustedIdentityException
   {
-    Log.d(TAG, "Decrypt2 start");
-
     synchronized (SESSION_LOCK) {
       SessionRecord     sessionRecord    = sessionStore.loadSession(remoteAddress);
       Optional<Integer> unsignedPreKeyId = sessionBuilder.process(sessionRecord, ciphertext);
@@ -194,7 +192,6 @@ public class SessionCipher {
         preKeyStore.removePreKey(unsignedPreKeyId.get());
       }
 
-      Log.d(TAG, "Decrypt2 done");
       return plaintext;
     }
   }
@@ -240,8 +237,6 @@ public class SessionCipher {
       throws InvalidMessageException, DuplicateMessageException, LegacyMessageException,
              NoSessionException, UntrustedIdentityException
   {
-    Log.d(TAG, "Decrypt4 start");
-
     synchronized (SESSION_LOCK) {
 
       if (!sessionStore.containsSession(remoteAddress)) {
@@ -260,7 +255,6 @@ public class SessionCipher {
       callback.handlePlaintext(plaintext);
 
       sessionStore.storeSession(remoteAddress, sessionRecord);
-      Log.d(TAG, "Decrypt4 done");
 
       return plaintext;
     }
@@ -269,7 +263,6 @@ public class SessionCipher {
   private byte[] decrypt(SessionRecord sessionRecord, SignalMessage ciphertext)
       throws DuplicateMessageException, LegacyMessageException, InvalidMessageException
   {
-    Log.d(TAG, "Decrypt5 start");
 
     synchronized (SESSION_LOCK) {
       Iterator<SessionState> previousStates = sessionRecord.getPreviousSessionStates().iterator();
@@ -280,7 +273,6 @@ public class SessionCipher {
         byte[]       plaintext    = decrypt(sessionState, ciphertext);
 
         sessionRecord.setState(sessionState);
-        Log.d(TAG, "Decrypt5 done");
 
         return plaintext;
       } catch (InvalidMessageException e) {
@@ -308,7 +300,6 @@ public class SessionCipher {
   private byte[] decrypt(SessionState sessionState, SignalMessage ciphertextMessage)
       throws InvalidMessageException, DuplicateMessageException, LegacyMessageException
   {
-    Log.d(TAG, "[SC] Decrypt6 start");
 
     if (!sessionState.hasSenderChain()) {
       throw new InvalidMessageException("Uninitialized session!");
@@ -333,7 +324,6 @@ public class SessionCipher {
     byte[] plaintext = getPlaintext(messageKeys, ciphertextMessage.getBody());
 
     sessionState.clearUnacknowledgedPreKeyMessage();
-    Log.d(TAG, "Decrypt6 done");
 
     return plaintext;
   }

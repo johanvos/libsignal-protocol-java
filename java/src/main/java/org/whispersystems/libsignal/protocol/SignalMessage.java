@@ -115,7 +115,6 @@ public class SignalMessage implements CiphertextMessage {
   public void verifyMac(IdentityKey senderIdentityKey, IdentityKey receiverIdentityKey, SecretKeySpec macKey)
       throws InvalidMessageException
   {
-    Log.d(TAG, "verifyMac");
     byte[][] parts    = ByteUtil.split(serialized, serialized.length - MAC_LENGTH, MAC_LENGTH);
     byte[]   ourMac   = getMac(senderIdentityKey, receiverIdentityKey, macKey, parts[0]);
     byte[]   theirMac = parts[1];

@@ -64,4 +64,12 @@ public class Hex {
     buf.append(HEX_DIGITS[b & 0xf]);
   }
 
+  public static byte[] fromStringCondensedAssert(String encoded) {
+    try {
+        return fromStringCondensed(encoded);
+    } catch (IOException e) {
+        throw new AssertionError(e);
+    }
+  }
+
 }

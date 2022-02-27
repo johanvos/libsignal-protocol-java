@@ -18,77 +18,76 @@ import org.whispersystems.libsignal.NoSessionException;
 
 public class InMemorySessionStore implements SessionStore {
 
-  private Map<SignalProtocolAddress, byte[]> sessions = new HashMap<>();
+    private Map<SignalProtocolAddress, byte[]> sessions = new HashMap<>();
 
-  public InMemorySessionStore() {}
-
-  @Override
-  public synchronized SessionRecord loadSession(SignalProtocolAddress remoteAddress) {
-    try {
-      if (containsSession(remoteAddress)) {
-        return new SessionRecord(sessions.get(remoteAddress));
-      } else {
-        return new SessionRecord();
-      }
-    } catch (IOException e) {
-      throw new AssertionError(e);
-    }
-  }
-  
-  @Override
-  public synchronized List<SessionRecord> loadExistingSessions(List<SignalProtocolAddress> addresses) throws NoSessionException {
-    List<SessionRecord> resultSessions = new LinkedList<>();
-    for (SignalProtocolAddress remoteAddress : addresses) {
-      byte[] serialized = sessions.get(remoteAddress);
-      if (serialized == null) {
-        throw new NoSessionException("no session for " + remoteAddress);
-      }
-      try {
-        resultSessions.add(new SessionRecord(serialized));
-      } catch (IOException e) {
-        throw new AssertionError(e);
-      }
-    }
-    return resultSessions;
-  }
-
-  @Override
-  public synchronized List<Integer> getSubDeviceSessions(String name) {
-    List<Integer> deviceIds = new LinkedList<>();
-
-    for (SignalProtocolAddress key : sessions.keySet()) {
-      if (key.getName().equals(name) &&
-          key.getDeviceId() != 1)
-      {
-        deviceIds.add(key.getDeviceId());
-      }
+    public InMemorySessionStore() {
     }
 
-    return deviceIds;
-  }
-
-  @Override
-  public synchronized void storeSession(SignalProtocolAddress address, SessionRecord record) {
-    sessions.put(address, record.serialize());
-  }
-
-  @Override
-  public synchronized boolean containsSession(SignalProtocolAddress address) {
-System.err.println("[SStore] containtsSession asked for " + address+", sessions = " + sessions);
-    return sessions.containsKey(address);
-  }
-
-  @Override
-  public synchronized void deleteSession(SignalProtocolAddress address) {
-    sessions.remove(address);
-  }
-
-  @Override
-  public synchronized void deleteAllSessions(String name) {
-    for (SignalProtocolAddress key : sessions.keySet()) {
-      if (key.getName().equals(name)) {
-        sessions.remove(key);
-      }
+    @Override
+    public synchronized SessionRecord loadSession(SignalProtocolAddress remoteAddress) {
+        try {
+            if (containsSession(remoteAddress)) {
+                return new SessionRecord(sessions.get(remoteAddress));
+            } else {
+                return new SessionRecord();
+            }
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
-  }
+
+    @Override
+    public synchronized List<SessionRecord> loadExistingSessions(List<SignalProtocolAddress> addresses) throws NoSessionException {
+        List<SessionRecord> resultSessions = new LinkedList<>();
+        for (SignalProtocolAddress remoteAddress : addresses) {
+            byte[] serialized = sessions.get(remoteAddress);
+            if (serialized == null) {
+                throw new NoSessionException("no session for " + remoteAddress);
+            }
+            try {
+                resultSessions.add(new SessionRecord(serialized));
+            } catch (IOException e) {
+                throw new AssertionError(e);
+            }
+        }
+        return resultSessions;
+    }
+
+    @Override
+    public synchronized List<Integer> getSubDeviceSessions(String name) {
+        List<Integer> deviceIds = new LinkedList<>();
+
+        for (SignalProtocolAddress key : sessions.keySet()) {
+            if (key.getName().equals(name)
+                    && key.getDeviceId() != 1) {
+                deviceIds.add(key.getDeviceId());
+            }
+        }
+
+        return deviceIds;
+    }
+
+    @Override
+    public synchronized void storeSession(SignalProtocolAddress address, SessionRecord record) {
+        sessions.put(address, record.serialize());
+    }
+
+    @Override
+    public synchronized boolean containsSession(SignalProtocolAddress address) {
+        return sessions.containsKey(address);
+    }
+
+    @Override
+    public synchronized void deleteSession(SignalProtocolAddress address) {
+        sessions.remove(address);
+    }
+
+    @Override
+    public synchronized void deleteAllSessions(String name) {
+        for (SignalProtocolAddress key : sessions.keySet()) {
+            if (key.getName().equals(name)) {
+                sessions.remove(key);
+            }
+        }
+    }
 }

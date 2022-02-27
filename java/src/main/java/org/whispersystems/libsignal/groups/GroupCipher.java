@@ -36,199 +36,193 @@ import org.whispersystems.libsignal.util.UUIDUtil;
 /**
  * The main entry point for Signal Protocol group encrypt/decrypt operations.
  *
- * Once a session has been established with {@link org.whispersystems.libsignal.groups.GroupSessionBuilder}
- * and a {@link org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage} has been
- * distributed to each member of the group, this class can be used for all subsequent encrypt/decrypt
- * operations within that session (ie: until group membership changes).
+ * Once a session has been established with
+ * {@link org.whispersystems.libsignal.groups.GroupSessionBuilder} and a
+ * {@link org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage}
+ * has been distributed to each member of the group, this class can be used for
+ * all subsequent encrypt/decrypt operations within that session (ie: until
+ * group membership changes).
  *
  * @author Moxie Marlinspike
  */
 public class GroupCipher {
 
-  static final Object LOCK = new Object();
+    static final Object LOCK = new Object();
 
-  private final SenderKeyStore senderKeyStore;
-  private final SignalProtocolAddress sender;
-  
+    private final SenderKeyStore senderKeyStore;
+    private final SignalProtocolAddress sender;
+
     private static final Logger LOG = Logger.getLogger(GroupCipher.class.getName());
 
-
- // private final SenderKeyName senderKeyId;
-
-  public GroupCipher(SenderKeyStore senderKeyStore, SignalProtocolAddress sender) {
-    this.senderKeyStore = senderKeyStore;
-    this.sender = sender;
-  }
-
-  /**
-   * Encrypt a message.
-   *
-   * @param paddedPlaintext The plaintext message bytes, optionally padded.
-   * @return Ciphertext.
-   * @throws NoSessionException
-   */
-  public CiphertextMessage encrypt(UUID distributionId, byte[] paddedPlaintext) throws NoSessionException {
-    synchronized (LOCK) {
-      try {
-        SenderKeyRecord  record         = senderKeyStore.loadSenderKey(sender, distributionId);
-        SenderKeyState   senderKeyState = record.getSenderKeyState();
-        SenderMessageKey senderKey      = senderKeyState.getSenderChainKey().getSenderMessageKey();
-        byte[]           ciphertext     = getCipherText(senderKey.getIv(), senderKey.getCipherKey(), paddedPlaintext);
-
-        SenderKeyMessage senderKeyMessage = new SenderKeyMessage(senderKeyState.getKeyId(),
-                                                                 senderKey.getIteration(),
-                                                                 ciphertext,
-                distributionId,
-                                                                 senderKeyState.getSigningKeyPrivate());
-        senderKeyState.setSenderChainKey(senderKeyState.getSenderChainKey().getNext());
-
-        senderKeyStore.storeSenderKey(sender, distributionId, record);
-
-        return senderKeyMessage;
-      } catch (InvalidKeyIdException e) {
-        throw new NoSessionException(e);
-      }
+    // private final SenderKeyName senderKeyId;
+    public GroupCipher(SenderKeyStore senderKeyStore, SignalProtocolAddress sender) {
+        this.senderKeyStore = senderKeyStore;
+        this.sender = sender;
     }
-  }
 
-  /**
-   * Decrypt a SenderKey group message.
-   *
-   * @param senderKeyMessageBytes The received ciphertext.
-   * @return Plaintext
-   * @throws LegacyMessageException
-   * @throws InvalidMessageException
-   * @throws DuplicateMessageException
-   */
-  public byte[] decrypt(byte[] senderKeyMessageBytes)
-      throws LegacyMessageException, DuplicateMessageException, InvalidMessageException, NoSessionException
-  {
-    return decrypt(senderKeyMessageBytes, new NullDecryptionCallback());
-  }
+    /**
+     * Encrypt a message.
+     *
+     * @param paddedPlaintext The plaintext message bytes, optionally padded.
+     * @return Ciphertext.
+     * @throws NoSessionException
+     */
+    public CiphertextMessage encrypt(UUID distributionId, byte[] paddedPlaintext) throws NoSessionException {
+        synchronized (LOCK) {
+            try {
+                SenderKeyRecord record = senderKeyStore.loadSenderKey(sender, distributionId);
+                SenderKeyState senderKeyState = record.getSenderKeyState();
+                SenderMessageKey senderKey = senderKeyState.getSenderChainKey().getSenderMessageKey();
+                byte[] ciphertext = getCipherText(senderKey.getIv(), senderKey.getCipherKey(), paddedPlaintext);
 
-  /**
-   * Decrypt a SenderKey group message.
-   *
-   * @param senderKeyMessageBytes The received ciphertext.
-   * @param callback   A callback that is triggered after decryption is complete,
-   *                    but before the updated session state has been committed to the session
-   *                    DB.  This allows some implementations to store the committed plaintext
-   *                    to a DB first, in case they are concerned with a crash happening between
-   *                    the time the session state is updated but before they're able to store
-   *                    the plaintext to disk.
-   * @return Plaintext
-   * @throws LegacyMessageException
-   * @throws InvalidMessageException
-   * @throws DuplicateMessageException
-   */
-  public byte[] decrypt(byte[] senderKeyMessageBytes, DecryptionCallback callback)
-      throws LegacyMessageException, InvalidMessageException, DuplicateMessageException,
-             NoSessionException
-  {
-    synchronized (LOCK) {
-      try {
-          LOG.info("[GroupCiper] decrypt, senderkeymessageBytes[0] = "+senderKeyMessageBytes[0]);
-          // System.err.println("skm = "+Arrays.toString(senderKeyMessageBytes));
-          byte[] skmb = new byte[senderKeyMessageBytes.length-65];
-          System.arraycopy(senderKeyMessageBytes, 1, skmb, 0, skmb.length);
-          // System.err.println("decrypt skm, bytes = "+Arrays.toString(skmb));
-          SignalProtos.SenderKeyMessage skm = SignalProtos.SenderKeyMessage.parseFrom(skmb);
-          UUID uuid = UUIDUtil.deserialize(skm.getDistributionUuid().toByteArray());
-          LOG.fine("I need to load senderkey for "+sender+", distributionId = "+uuid);
-          SenderKeyRecord record = senderKeyStore.loadSenderKey(sender, uuid);
+                SenderKeyMessage senderKeyMessage = new SenderKeyMessage(senderKeyState.getKeyId(),
+                        senderKey.getIteration(),
+                        ciphertext,
+                        distributionId,
+                        senderKeyState.getSigningKeyPrivate());
+                senderKeyState.setSenderChainKey(senderKeyState.getSenderChainKey().getNext());
 
-        if (record.isEmpty()) {
-          throw new NoSessionException("No sender key for: " + sender);
-        }
+                senderKeyStore.storeSenderKey(sender, distributionId, record);
 
-        SenderKeyMessage senderKeyMessage = new SenderKeyMessage(senderKeyMessageBytes);
-        SenderKeyState   senderKeyState   = record.getSenderKeyState(senderKeyMessage.getChainId());
-
-        senderKeyMessage.verifySignature(senderKeyState.getSigningKeyPublic());
-
-        SenderMessageKey senderKey = getSenderKey(senderKeyState, senderKeyMessage.getIteration());
-
-        byte[] plaintext = getPlainText(senderKey.getIv(), senderKey.getCipherKey(), senderKeyMessage.getCipherText());
-
-        callback.handlePlaintext(plaintext);
-
-        senderKeyStore.storeSenderKey(sender, uuid, record);
-
-        return plaintext;
-      } catch (org.whispersystems.libsignal.InvalidKeyException | InvalidKeyIdException e) {
-        throw new InvalidMessageException(e);
-      } catch (InvalidProtocolBufferException ex) {
-            ex.printStackTrace();
-                    throw new InvalidMessageException(ex);
-
+                return senderKeyMessage;
+            } catch (InvalidKeyIdException e) {
+                throw new NoSessionException(e);
+            }
         }
     }
-  }
 
-  private SenderMessageKey getSenderKey(SenderKeyState senderKeyState, int iteration)
-      throws DuplicateMessageException, InvalidMessageException
-  {
-    SenderChainKey senderChainKey = senderKeyState.getSenderChainKey();
-
-    if (senderChainKey.getIteration() > iteration) {
-      if (senderKeyState.hasSenderMessageKey(iteration)) {
-        return senderKeyState.removeSenderMessageKey(iteration);
-      } else {
-        throw new DuplicateMessageException("Received message with old counter: " +
-                                            senderChainKey.getIteration() + " , " + iteration);
-      }
+    /**
+     * Decrypt a SenderKey group message.
+     *
+     * @param senderKeyMessageBytes The received ciphertext.
+     * @return Plaintext
+     * @throws LegacyMessageException
+     * @throws InvalidMessageException
+     * @throws DuplicateMessageException
+     */
+    public byte[] decrypt(byte[] senderKeyMessageBytes)
+            throws LegacyMessageException, DuplicateMessageException, InvalidMessageException, NoSessionException {
+        return decrypt(senderKeyMessageBytes, new NullDecryptionCallback());
     }
 
-    if (iteration - senderChainKey.getIteration() > 2000) {
-      throw new InvalidMessageException("Over 2000 messages into the future!");
+    /**
+     * Decrypt a SenderKey group message.
+     *
+     * @param senderKeyMessageBytes The received ciphertext.
+     * @param callback A callback that is triggered after decryption is
+     * complete, but before the updated session state has been committed to the
+     * session DB. This allows some implementations to store the committed
+     * plaintext to a DB first, in case they are concerned with a crash
+     * happening between the time the session state is updated but before
+     * they're able to store the plaintext to disk.
+     * @return Plaintext
+     * @throws LegacyMessageException
+     * @throws InvalidMessageException
+     * @throws DuplicateMessageException
+     */
+    public byte[] decrypt(byte[] senderKeyMessageBytes, DecryptionCallback callback)
+            throws LegacyMessageException, InvalidMessageException, DuplicateMessageException,
+            NoSessionException {
+        synchronized (LOCK) {
+            try {
+                LOG.finest("[GroupCiper] decrypt, senderkeymessageBytes[0] = " + senderKeyMessageBytes[0]);
+                byte[] skmb = new byte[senderKeyMessageBytes.length - 65];
+                System.arraycopy(senderKeyMessageBytes, 1, skmb, 0, skmb.length);
+                SignalProtos.SenderKeyMessage skm = SignalProtos.SenderKeyMessage.parseFrom(skmb);
+                UUID uuid = UUIDUtil.deserialize(skm.getDistributionUuid().toByteArray());
+                LOG.fine("I need to load senderkey for " + sender + ", distributionId = " + uuid);
+                SenderKeyRecord record = senderKeyStore.loadSenderKey(sender, uuid);
+
+                if (record.isEmpty()) {
+                    throw new NoSessionException("No sender key for: " + sender);
+                }
+
+                SenderKeyMessage senderKeyMessage = new SenderKeyMessage(senderKeyMessageBytes);
+                SenderKeyState senderKeyState = record.getSenderKeyState(senderKeyMessage.getChainId());
+
+                senderKeyMessage.verifySignature(senderKeyState.getSigningKeyPublic());
+
+                SenderMessageKey senderKey = getSenderKey(senderKeyState, senderKeyMessage.getIteration());
+
+                byte[] plaintext = getPlainText(senderKey.getIv(), senderKey.getCipherKey(), senderKeyMessage.getCipherText());
+
+                callback.handlePlaintext(plaintext);
+
+                senderKeyStore.storeSenderKey(sender, uuid, record);
+
+                return plaintext;
+            } catch (org.whispersystems.libsignal.InvalidKeyException | InvalidKeyIdException e) {
+                throw new InvalidMessageException(e);
+            } catch (InvalidProtocolBufferException ex) {
+                ex.printStackTrace();
+                throw new InvalidMessageException(ex);
+
+            }
+        }
     }
 
-    while (senderChainKey.getIteration() < iteration) {
-      senderKeyState.addSenderMessageKey(senderChainKey.getSenderMessageKey());
-      senderChainKey = senderChainKey.getNext();
+    private SenderMessageKey getSenderKey(SenderKeyState senderKeyState, int iteration)
+            throws DuplicateMessageException, InvalidMessageException {
+        SenderChainKey senderChainKey = senderKeyState.getSenderChainKey();
+
+        if (senderChainKey.getIteration() > iteration) {
+            if (senderKeyState.hasSenderMessageKey(iteration)) {
+                return senderKeyState.removeSenderMessageKey(iteration);
+            } else {
+                throw new DuplicateMessageException("Received message with old counter: "
+                        + senderChainKey.getIteration() + " , " + iteration);
+            }
+        }
+
+        if (iteration - senderChainKey.getIteration() > 2000) {
+            throw new InvalidMessageException("Over 2000 messages into the future!");
+        }
+
+        while (senderChainKey.getIteration() < iteration) {
+            senderKeyState.addSenderMessageKey(senderChainKey.getSenderMessageKey());
+            senderChainKey = senderChainKey.getNext();
+        }
+
+        senderKeyState.setSenderChainKey(senderChainKey.getNext());
+        return senderChainKey.getSenderMessageKey();
     }
 
-    senderKeyState.setSenderChainKey(senderChainKey.getNext());
-    return senderChainKey.getSenderMessageKey();
-  }
+    private byte[] getPlainText(byte[] iv, byte[] key, byte[] ciphertext)
+            throws InvalidMessageException {
+        try {
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 
-  private byte[] getPlainText(byte[] iv, byte[] key, byte[] ciphertext)
-      throws InvalidMessageException
-  {
-    try {
-      IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
-      Cipher          cipher          = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), ivParameterSpec);
 
-      cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), ivParameterSpec);
-
-      return cipher.doFinal(ciphertext);
-    } catch (NoSuchAlgorithmException | NoSuchPaddingException | java.security.InvalidKeyException |
-             InvalidAlgorithmParameterException e)
-    {
-      throw new AssertionError(e);
-    } catch (IllegalBlockSizeException | BadPaddingException e) {
-      throw new InvalidMessageException(e);
+            return cipher.doFinal(ciphertext);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | java.security.InvalidKeyException
+                | InvalidAlgorithmParameterException e) {
+            throw new AssertionError(e);
+        } catch (IllegalBlockSizeException | BadPaddingException e) {
+            throw new InvalidMessageException(e);
+        }
     }
-  }
 
-  private byte[] getCipherText(byte[] iv, byte[] key, byte[] plaintext) {
-    try {
-      IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
-      Cipher          cipher          = Cipher.getInstance("AES/CBC/PKCS5Padding");
+    private byte[] getCipherText(byte[] iv, byte[] key, byte[] plaintext) {
+        try {
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 
-      cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), ivParameterSpec);
+            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), ivParameterSpec);
 
-      return cipher.doFinal(plaintext);
-    } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException |
-             IllegalBlockSizeException | BadPaddingException | java.security.InvalidKeyException e)
-    {
-      throw new AssertionError(e);
+            return cipher.doFinal(plaintext);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException
+                | IllegalBlockSizeException | BadPaddingException | java.security.InvalidKeyException e) {
+            throw new AssertionError(e);
+        }
     }
-  }
 
-  private static class NullDecryptionCallback implements DecryptionCallback {
-    @Override
-    public void handlePlaintext(byte[] plaintext) {}
-  }
+    private static class NullDecryptionCallback implements DecryptionCallback {
+
+        @Override
+        public void handlePlaintext(byte[] plaintext) {
+        }
+    }
 
 }

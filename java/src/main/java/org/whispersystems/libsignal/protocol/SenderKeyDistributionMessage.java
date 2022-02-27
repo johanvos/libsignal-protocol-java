@@ -30,7 +30,7 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
 
     public SenderKeyDistributionMessage(int chainId, int iteration, byte[] chainKey,
             ECPublicKey signatureKey, UUID distributionUuid) {
-        LOG.info("Create SKDM with distid = " + distributionUuid);
+        LOG.fine("Create SKDM with distid = " + distributionUuid);
         byte[] version = {ByteUtil.intsToByteHighAndLow(CURRENT_VERSION, CURRENT_VERSION)};
         byte[] uuidBytes = UUIDUtil.serialize(distributionUuid);
         byte[] protobuf = SignalProtos.SenderKeyDistributionMessage.newBuilder()

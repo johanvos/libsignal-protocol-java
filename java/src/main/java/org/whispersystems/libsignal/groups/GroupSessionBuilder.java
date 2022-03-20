@@ -79,7 +79,9 @@ public class GroupSessionBuilder {
         synchronized (GroupCipher.LOCK) {
             try {
                 SenderKeyRecord senderKeyRecord = senderKeyStore.loadSenderKey(sender, distributionId);
-
+                if (senderKeyRecord == null) {
+                    senderKeyRecord = new SenderKeyRecord();
+                }
                 if (senderKeyRecord.isEmpty()) {
                     senderKeyRecord.setSenderKeyState(KeyHelper.generateSenderKeyId(),
                             0,

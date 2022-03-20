@@ -5,7 +5,14 @@
  */
 package org.whispersystems.libsignal.protocol;
 
+import com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.whispersystems.libsignal.InvalidMessageException;
+import org.whispersystems.libsignal.InvalidVersionException;
+import org.whispersystems.libsignal.LegacyMessageException;
+import org.whispersystems.libsignal.ecc.ECPublicKey;
 
 public final class DecryptionErrorMessage {
 
@@ -13,44 +20,55 @@ public final class DecryptionErrorMessage {
     private final int messageType;
     private final long timestamp;
     private final int originalSenderDeviceId;
+    private ECPublicKey ratchetKey;
+    private static final Logger LOG = Logger.getLogger(DecryptionErrorMessage.class.getName());
 
     private DecryptionErrorMessage(byte[] originalBytes, int messageType, long timestamp, int originalSenderDeviceId) {
         this.originalBytes = originalBytes;
         this.messageType = messageType;
         this.timestamp = timestamp;
         this.originalSenderDeviceId = originalSenderDeviceId;
+        try {
+            switch (this.messageType) {
+                case CiphertextMessage.WHISPER_TYPE:
+                    SignalMessage sm = new SignalMessage(originalBytes);
+                    this.ratchetKey = sm.getSenderRatchetKey();
+                    break;
+                case CiphertextMessage.PREKEY_TYPE:
+                    PreKeySignalMessage pksm = new PreKeySignalMessage(originalBytes);
+                    this.ratchetKey = pksm.getWhisperMessage().getSenderRatchetKey();
+                    break;
+                case CiphertextMessage.SENDERKEY_TYPE:
+                    this.ratchetKey = null;
+                    break;
+                case CiphertextMessage.PLAINTEXT_CONTENT_TYPE:
+                    throw new IllegalArgumentException("Cannot create a DecryptionErrorMessage for plaintext content; it is not encrypted");
+            }
+
+        } catch (InvalidMessageException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        } catch (InvalidVersionException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        } catch (LegacyMessageException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        }
     }
 
     public static DecryptionErrorMessage forOriginalMessage(byte[] originalBytes, int messageType, long timestamp, int originalSenderDeviceId) {
         return new DecryptionErrorMessage(originalBytes, messageType, timestamp, originalSenderDeviceId);
     }
-    
+
     public byte[] serialize() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.writeBytes(originalBytes);
-        baos.writeBytes(intToBytes(messageType));
-        baos.writeBytes(longToBytes(timestamp));
-        baos.writeBytes(intToBytes(originalSenderDeviceId));
-        return baos.toByteArray();
+        SignalProtos.DecryptionErrorMessage.Builder builder = 
+                SignalProtos.DecryptionErrorMessage.newBuilder()
+                .setDeviceId(originalSenderDeviceId)
+                .setTimestamp(timestamp);
+        if (this.ratchetKey != null) {
+            builder.setRatchetKey(ByteString.copyFrom(ratchetKey.getPublicKeyBytes()));
+        }
+        return builder.build().toByteArray();
     }
 
-    private byte[] intToBytes(int val) {
-        byte[] answer = new byte[4];
-        for (int i = 0; i < 4; i++) {
-            answer[3 - i] = (byte) (val & 0xFF);
-            val >>= 8;
-        }
-        return answer;
-    }
-    
-    private byte[] longToBytes(long val) {
-        byte[] answer = new byte[8];
-        for (int i = 0; i < 8; i++) {
-            answer[7 - i] = (byte) (val & 0xFF);
-            val >>= 8;
-        }
-        return answer;
-    }
 }
 /*
 

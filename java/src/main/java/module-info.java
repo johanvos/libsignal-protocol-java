@@ -13,4 +13,7 @@ module org.whispersystems.protocol {
     exports org.whispersystems.libsignal.state;
     exports org.whispersystems.libsignal.state.impl;
     exports org.whispersystems.libsignal.util;
+
+    opens org.whispersystems.libsignal to com.fasterxml.jackson.databind;
+
 }

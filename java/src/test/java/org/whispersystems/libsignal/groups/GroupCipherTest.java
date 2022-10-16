@@ -19,13 +19,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import org.whispersystems.libsignal.InvalidVersionException;
 
 public class GroupCipherTest extends TestCase {
 
   private static final SignalProtocolAddress SENDER_ADDRESS = new SignalProtocolAddress("+14150001111", 1);
   private static final UUID DISTRIBUTION_ID = UUID.fromString("d1d1d1d1-7000-11eb-b32a-33b8a8a487a6");
 
-  public void testNoSession() throws InvalidMessageException, LegacyMessageException, NoSessionException, DuplicateMessageException {
+  public void testNoSession() throws InvalidMessageException, LegacyMessageException, NoSessionException, DuplicateMessageException, InvalidVersionException {
     InMemorySenderKeyStore aliceStore = new InMemorySenderKeyStore();
     InMemorySenderKeyStore bobStore   = new InMemorySenderKeyStore();
 
@@ -50,7 +51,7 @@ public class GroupCipherTest extends TestCase {
   }
 
   public void testBasicEncryptDecrypt()
-      throws LegacyMessageException, DuplicateMessageException, InvalidMessageException, NoSessionException
+      throws LegacyMessageException, DuplicateMessageException, InvalidMessageException, NoSessionException, InvalidVersionException
   {
     InMemorySenderKeyStore aliceStore = new InMemorySenderKeyStore();
     InMemorySenderKeyStore bobStore   = new InMemorySenderKeyStore();
@@ -71,7 +72,7 @@ public class GroupCipherTest extends TestCase {
     assertTrue(new String(plaintextFromAlice).equals("smert ze smert"));
   }
 
-  public void testLargeMessages() throws InvalidMessageException, LegacyMessageException, NoSessionException, DuplicateMessageException {
+  public void testLargeMessages() throws InvalidMessageException, LegacyMessageException, NoSessionException, DuplicateMessageException, InvalidVersionException {
     InMemorySenderKeyStore aliceStore = new InMemorySenderKeyStore();
     InMemorySenderKeyStore bobStore   = new InMemorySenderKeyStore();
 
@@ -95,7 +96,7 @@ public class GroupCipherTest extends TestCase {
   }
 
   public void testBasicRatchet()
-      throws LegacyMessageException, DuplicateMessageException, InvalidMessageException, NoSessionException
+      throws LegacyMessageException, DuplicateMessageException, InvalidMessageException, NoSessionException, InvalidVersionException
   {
     InMemorySenderKeyStore aliceStore = new InMemorySenderKeyStore();
     InMemorySenderKeyStore bobStore   = new InMemorySenderKeyStore();
@@ -134,7 +135,7 @@ public class GroupCipherTest extends TestCase {
     assertTrue(new String(plaintextFromAlice3).equals("smert ze smert3"));
   }
 
-  public void testLateJoin() throws NoSessionException, InvalidMessageException, LegacyMessageException, DuplicateMessageException {
+  public void testLateJoin() throws NoSessionException, InvalidMessageException, LegacyMessageException, DuplicateMessageException, InvalidVersionException {
     InMemorySenderKeyStore aliceStore = new InMemorySenderKeyStore();
     InMemorySenderKeyStore bobStore   = new InMemorySenderKeyStore();
 

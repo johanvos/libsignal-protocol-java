@@ -21,6 +21,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -119,13 +120,13 @@ public class SignalMessage implements CiphertextMessage {
     byte[]   ourMac   = getMac(senderIdentityKey, receiverIdentityKey, macKey, parts[0]);
     byte[]   theirMac = parts[1];
     if (!MessageDigest.isEqual(ourMac, theirMac)) {
-        Log.d(TAG, "[SIGNALMESSAGE] verifyMac, senderIK = " + senderIdentityKey.getPublicKey() + " and receierKey = "+receiverIdentityKey.getPublicKey()+" and mackey = " + macKey);        
-        Log.d(TAG, "serialized = " + Arrays.toString(serialized));
-        Log.d(TAG, "ourmac = " + Arrays.toString(ourMac));
-        Log.d(TAG, "theirmac = " + Arrays.toString(theirMac));
-        Log.d(TAG, "senderkey = " + Arrays.toString(senderIdentityKey.getPublicKey().serialize()));
-        Log.d(TAG, "receiverkey = " + Arrays.toString(receiverIdentityKey.getPublicKey().serialize()));
-        Log.d(TAG, "[SIGNALMESSAGE] verifyMac, ourmaclength = " + ourMac.length+" and their = " + theirMac.length);
+        LOG.finest("[SIGNALMESSAGE] verifyMac, senderIK = " + senderIdentityKey.getPublicKey() + " and receierKey = "+receiverIdentityKey.getPublicKey()+" and mackey = " + macKey);        
+        LOG.finest("serialized = " + Arrays.toString(serialized));
+        LOG.finest("ourmac = " + Arrays.toString(ourMac));
+        LOG.finest("theirmac = " + Arrays.toString(theirMac));
+        LOG.finest("senderpubkey = " + Arrays.toString(senderIdentityKey.getPublicKey().serialize()));
+        LOG.finest("receiverpubkey = " + Arrays.toString(receiverIdentityKey.getPublicKey().serialize()));
+        LOG.finest("[SIGNALMESSAGE] verifyMac, ourmaclength = " + ourMac.length+" and their = " + theirMac.length);
         throw new InvalidMessageException("Bad Mac!");
     }
   }
@@ -162,5 +163,6 @@ public class SignalMessage implements CiphertextMessage {
     return message != null && message.length >= 1 &&
         ByteUtil.highBitsToInt(message[0]) != CiphertextMessage.CURRENT_VERSION;
   }
+    private static final Logger LOG = Logger.getLogger(SignalMessage.class.getName());
 
 }

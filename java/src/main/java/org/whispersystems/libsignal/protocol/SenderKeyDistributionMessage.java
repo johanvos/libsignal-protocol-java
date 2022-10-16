@@ -12,6 +12,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 import org.whispersystems.libsignal.InvalidKeyException;
 import org.whispersystems.libsignal.InvalidMessageException;
+import org.whispersystems.libsignal.InvalidVersionException;
 import org.whispersystems.libsignal.LegacyMessageException;
 import org.whispersystems.libsignal.ecc.Curve;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
@@ -52,7 +53,7 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
         LOG.fine("SKDM serialized = " + Arrays.toString(this.serialized));
     }
 
-    public SenderKeyDistributionMessage(byte[] serialized) throws LegacyMessageException, InvalidMessageException {
+    public SenderKeyDistributionMessage(byte[] serialized) throws LegacyMessageException, InvalidMessageException, InvalidVersionException {
         try {
             LOG.fine("[SKDM] need to deserialize incoming skdm: " + Arrays.toString(serialized));
             byte[][] messageParts = ByteUtil.split(serialized, 1, serialized.length - 1);
@@ -64,7 +65,7 @@ public class SenderKeyDistributionMessage implements CiphertextMessage {
             }
 
             if (ByteUtil.highBitsToInt(version) > CURRENT_VERSION) {
-                throw new InvalidMessageException("Unknown version: " + ByteUtil.highBitsToInt(version));
+                throw new InvalidVersionException("Unknown version: " + ByteUtil.highBitsToInt(version));
             }
 
             SignalProtos.SenderKeyDistributionMessage distributionMessage = SignalProtos.SenderKeyDistributionMessage.parseFrom(message);

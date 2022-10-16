@@ -16,12 +16,16 @@ import org.whispersystems.libsignal.ecc.ECPublicKey;
 
 public final class DecryptionErrorMessage {
 
-    private final byte[] originalBytes;
-    private final int messageType;
-    private final long timestamp;
-    private final int originalSenderDeviceId;
+    private  byte[] originalBytes;
+    private  int messageType;
+    private  long timestamp;
+    private  int originalSenderDeviceId;
     private ECPublicKey ratchetKey;
     private static final Logger LOG = Logger.getLogger(DecryptionErrorMessage.class.getName());
+
+    public DecryptionErrorMessage(byte[] originalBytes) throws InvalidMessageException {
+    throw new RuntimeException ("Not implemented");
+    }
 
     private DecryptionErrorMessage(byte[] originalBytes, int messageType, long timestamp, int originalSenderDeviceId) {
         this.originalBytes = originalBytes;

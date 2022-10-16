@@ -46,6 +46,10 @@ public class IdentityKeyPair {
     return privateKey;
   }
 
+  public byte[] signAlternateIdentity(IdentityKey other) {
+      Thread.dumpStack();
+      throw new RuntimeException ("SignAlternateIdentity not yet implemented");
+  }
   public byte[] serialize() {
     return IdentityKeyPairStructure.newBuilder()
                                    .setPublicKey(ByteString.copyFrom(publicKey.serialize()))

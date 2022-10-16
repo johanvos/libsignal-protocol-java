@@ -1,13 +1,6 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package org.whispersystems.libsignal.protocol;
-//import org.whispersystems.libsignal.protocol.SignalProtos.DecryptionErrorMessage;
 
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
-import java.util.Base64;
 
 
 /**
@@ -33,6 +26,12 @@ public class PlaintextContent implements CiphertextMessage {
         serialized[ol + 1] = PADDING_BOUNDARY_BYTE;
         body = new byte[ol + 1];
         System.arraycopy(serialized, 1, body, 0, ol + 1);
+    }
+
+    public PlaintextContent(byte[] content) {
+        int cl = content.length;
+        this.body = new byte[cl -1];
+        System.arraycopy(content, 1, body, 0, cl-1);
     }
 
     @Override
